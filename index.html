@@ -1,0 +1,2797 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OMR মূল্যায়ন ও ফলাফল ব্যবস্থাপনা সিস্টেম</title>
+  
+  <!-- Google Fonts: Hind Siliguri for Bengali & Inter for modern UI -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- SheetJS for clean Excel (.xlsx) export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  
+  <!-- Canvas Confetti for celebration -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-light: #eef2ff;
+      --secondary: #06b6d4;
+      --success: #10b981;
+      --success-light: #d1fae5;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --danger: #ef4444;
+      --danger-light: #fee2e2;
+      --omr-pink: #d91c84;
+      --omr-pink-light: #fdf2f8;
+      --dark-surface: #0f172a;
+      
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --border-color: #e2e8f0;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+      
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    [data-theme="dark"] {
+      --bg-page: #0b0f19;
+      --bg-card: #131b2e;
+      --border-color: #1e293b;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --primary-light: #1e1b4b;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Hind Siliguri', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      line-height: 1.5;
+    }
+
+    /* Top Navigation */
+    .navbar {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .nav-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-main);
+    }
+
+    .logo-badge {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #d91c84, #4f46e5);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.35rem;
+      box-shadow: 0 4px 12px rgba(217, 28, 132, 0.35);
+    }
+
+    .brand-text h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-text p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0.55rem 1.1rem;
+      font-size: 0.92rem;
+      font-weight: 600;
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #6366f1);
+      color: white;
+      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.28);
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #4338ca, var(--primary));
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(79, 70, 229, 0.38);
+    }
+
+    .btn-omr {
+      background: linear-gradient(135deg, #d91c84, #e11d48);
+      color: white;
+      box-shadow: 0 4px 10px rgba(217, 28, 132, 0.3);
+    }
+    .btn-omr:hover {
+      background: linear-gradient(135deg, #be185d, #d91c84);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(217, 28, 132, 0.4);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      box-shadow: 0 4px 10px rgba(16, 185, 129, 0.28);
+    }
+    .btn-success:hover {
+      background: linear-gradient(135deg, #059669, #047857);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.38);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border-color: var(--border-color);
+      color: var(--text-main);
+    }
+    .btn-outline:hover {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .btn-sm {
+      padding: 0.38rem 0.75rem;
+      font-size: 0.82rem;
+      border-radius: var(--radius-sm);
+    }
+
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+      font-size: 1rem;
+    }
+    .icon-btn:hover {
+      color: var(--primary);
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    /* Main Container */
+    .app-main {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 1.5rem;
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* Banner / Hero Section */
+    .hero-banner {
+      background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(217, 28, 132, 0.08) 100%);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem 1.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-banner::after {
+      content: '';
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 150px;
+      height: 150px;
+      background: radial-gradient(circle, rgba(217, 28, 132, 0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .banner-info h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    .banner-info p {
+      color: var(--text-muted);
+      font-size: 0.93rem;
+      max-width: 700px;
+    }
+
+    .banner-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Upload & Setup Section (Two Folders + Controls) */
+    .grid-upload-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .upload-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .upload-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: #cbd5e1;
+    }
+
+    .card-header-flex {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-main);
+    }
+
+    .badge-pill {
+      font-size: 0.72rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: var(--radius-full);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge-primary { background: var(--primary-light); color: var(--primary); }
+    .badge-omr { background: var(--omr-pink-light); color: var(--omr-pink); }
+    .badge-success { background: var(--success-light); color: var(--success); }
+
+    .dropzone-box {
+      border: 2px dashed var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      background: var(--bg-page);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dropzone-box:hover, .dropzone-box.dragover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .dropzone-box.filled {
+      border-color: var(--success);
+      background: var(--success-light);
+    }
+
+    .dropzone-box input[type="file"] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .dropzone-icon {
+      font-size: 2.2rem;
+      color: var(--primary);
+      margin-bottom: 8px;
+      transition: transform 0.2s ease;
+    }
+
+    .dropzone-box:hover .dropzone-icon {
+      transform: scale(1.1);
+    }
+
+    .dropzone-text h4 {
+      font-size: 0.98rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .dropzone-text p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .folder-status-bar {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      padding: 0.5rem 0.8rem;
+      border-radius: var(--radius-sm);
+      background: var(--bg-page);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Actions Toolbar */
+    .evaluation-toolbar {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.5rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Scanning Progress Bar (hidden by default) */
+    .progress-wrapper {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      box-shadow: var(--shadow-sm);
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .progress-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .progress-bar-outer {
+      width: 100%;
+      height: 12px;
+      background: var(--border-color);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar-inner {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #d91c84, #4f46e5, #10b981);
+      border-radius: var(--radius-full);
+      transition: width 0.15s ease-out;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-bar-inner::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; bottom: 0; right: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+      animation: shimmer 1.5s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* Statistics Cards Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.1rem 1.25rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: var(--transition);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+
+    .stat-icon.blue { background: #e0e7ff; color: #4338ca; }
+    .stat-icon.green { background: #d1fae5; color: #047857; }
+    .stat-icon.yellow { background: #fef3c7; color: #b45309; }
+    .stat-icon.pink { background: #fce7f3; color: #be185d; }
+    .stat-icon.purple { background: #f3e8ff; color: #7e22ce; }
+
+    .stat-info .stat-value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      line-height: 1.2;
+      color: var(--text-main);
+    }
+
+    .stat-info .stat-label {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Table Container & Filter Toolbar */
+    .table-container-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .table-header-toolbar {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      background: var(--bg-card);
+    }
+
+    .search-filter-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+
+    .search-box {
+      position: relative;
+      min-width: 250px;
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 0.5rem 0.8rem 0.5rem 2.2rem;
+      font-size: 0.88rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: var(--bg-page);
+      color: var(--text-main);
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .search-box input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+
+    .filter-select {
+      padding: 0.5rem 0.8rem;
+      font-size: 0.85rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: var(--bg-page);
+      color: var(--text-main);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .filter-select:focus {
+      border-color: var(--primary);
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      width: 100%;
+    }
+
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.92rem;
+    }
+
+    .results-table th {
+      background: var(--bg-page);
+      padding: 0.85rem 1rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .results-table td {
+      padding: 0.9rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+      color: var(--text-main);
+    }
+
+    .results-table tbody tr {
+      transition: background-color 0.15s ease;
+    }
+
+    .results-table tbody tr:hover {
+      background-color: var(--primary-light);
+    }
+
+    .student-badge-id {
+      font-family: 'Inter', monospace;
+      font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 0.2rem 0.5rem;
+      border-radius: var(--radius-sm);
+      display: inline-block;
+    }
+
+    .roll-cell {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .set-tag {
+      display: inline-block;
+      width: 26px;
+      height: 26px;
+      line-height: 26px;
+      text-align: center;
+      border-radius: 50%;
+      background: var(--omr-pink-light);
+      color: var(--omr-pink);
+      font-weight: 700;
+      border: 1px solid var(--omr-pink);
+    }
+
+    .score-badge {
+      font-weight: 700;
+      font-size: 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .score-badge .score-total {
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-weight: 500;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0.25rem 0.65rem;
+      border-radius: var(--radius-full);
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .status-pass {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .status-fail {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .status-review {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .action-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .empty-state {
+      padding: 3.5rem 1rem;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .empty-state i {
+      font-size: 3.5rem;
+      color: #cbd5e1;
+      margin-bottom: 1rem;
+    }
+
+    .empty-state h3 {
+      font-size: 1.2rem;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    /* Modal Styling for View & Edit */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .modal-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      max-width: 950px;
+      width: 100%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-xl);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes scaleUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    .modal-header {
+      padding: 1.1rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-page);
+    }
+
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-page);
+    }
+
+    /* Modal Form Inputs */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      background: var(--bg-page);
+      padding: 1rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .form-group label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .form-control {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      color: var(--text-main);
+      outline: none;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary);
+    }
+
+    /* Visual OMR MCQ Bubble Review & Edit Grid */
+    .omr-review-container {
+      border: 1.5px solid var(--omr-pink);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    .omr-review-header {
+      background: var(--omr-pink-light);
+      color: var(--omr-pink);
+      padding: 0.5rem 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1.5px solid var(--omr-pink);
+      font-size: 0.95rem;
+    }
+
+    .omr-legend {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 0.8rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .dot-correct { background: #10b981; }
+    .dot-wrong { background: #ef4444; }
+    .dot-blank { background: #e2e8f0; border: 1px solid #94a3b8; }
+    .dot-key { background: #4f46e5; }
+
+    .omr-questions-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 12px;
+      background: #fafafa;
+    }
+
+    @media (max-width: 768px) {
+      .omr-questions-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .omr-column {
+      background: #fff;
+      border: 1px solid #fbcfe8;
+      border-radius: var(--radius-sm);
+      padding: 8px;
+    }
+
+    .omr-q-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 6px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 3px;
+      transition: background 0.15s;
+    }
+
+    .omr-q-row:hover {
+      background: #fdf2f8;
+    }
+
+    .q-number-label {
+      font-weight: 700;
+      font-size: 0.88rem;
+      width: 28px;
+      color: #333;
+    }
+
+    .bubbles-interactive-group {
+      display: flex;
+      gap: 6px;
+    }
+
+    .interactive-bubble {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 1.5px solid var(--omr-pink);
+      color: var(--omr-pink);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+      background: #fff;
+    }
+
+    .interactive-bubble:hover {
+      transform: scale(1.15);
+      border-color: #4f46e5;
+    }
+
+    /* Bubble states */
+    .interactive-bubble.filled-correct {
+      background: #10b981 !important;
+      border-color: #10b981 !important;
+      color: white !important;
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+    }
+
+    .interactive-bubble.filled-wrong {
+      background: #ef4444 !important;
+      border-color: #ef4444 !important;
+      color: white !important;
+      box-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
+    }
+
+    .interactive-bubble.filled-key-answer {
+      border: 2px dashed #4f46e5;
+      color: #4f46e5;
+      position: relative;
+    }
+
+    .interactive-bubble.filled-key-answer::after {
+      content: '✓';
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      font-size: 10px;
+      background: #4f46e5;
+      color: white;
+      border-radius: 50%;
+      width: 12px;
+      height: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .interactive-bubble.selected-user {
+      background: #1e293b;
+      border-color: #1e293b;
+      color: white;
+    }
+
+    /* Toast Notification */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .toast {
+      pointer-events: auto;
+      background: #1e293b;
+      color: white;
+      padding: 0.85rem 1.25rem;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      animation: slideInRight 0.3s ease;
+      min-width: 280px;
+      max-width: 400px;
+    }
+
+    .toast.success { border-left: 4px solid #10b981; }
+    .toast.info { border-left: 4px solid #06b6d4; }
+    .toast.warning { border-left: 4px solid #f59e0b; }
+    .toast.danger { border-left: 4px solid #ef4444; }
+
+    @keyframes slideInRight {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Answer Key Preview and Tab Styles */
+    .btn-xs {
+      padding: 0.25rem 0.6rem;
+      font-size: 0.78rem;
+      border-radius: var(--radius-sm);
+    }
+
+    .key-tab-btn {
+      background: none;
+      border: none;
+      padding: 0.75rem 1rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition);
+    }
+    .key-tab-btn:hover {
+      color: var(--primary);
+    }
+    .key-tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      background: rgba(79, 70, 229, 0.05);
+    }
+
+    .key-preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+    .key-preview-table th, .key-preview-table td {
+      padding: 6px 10px;
+      border: 1px solid var(--border-color);
+    }
+    .key-preview-table th {
+      background: var(--bg-page);
+      color: var(--text-main);
+      font-weight: 700;
+    }
+    .key-source-text-view {
+      font-family: 'Inter', monospace;
+      font-size: 0.85rem;
+      white-space: pre-wrap;
+      background: var(--bg-card);
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      line-height: 1.5;
+    }
+
+    /* Print styling */
+    @media print {
+      .navbar, .hero-banner, .grid-upload-section, .evaluation-toolbar, .stats-grid, .modal-overlay, .toast-container, .table-header-toolbar, .action-btn-group {
+        display: none !important;
+      }
+      body {
+        background: white !important;
+        color: black !important;
+      }
+      .table-container-card {
+        border: none !important;
+        box-shadow: none !important;
+      }
+      .results-table th, .results-table td {
+        border: 1px solid #ccc !important;
+        color: black !important;
+      }
+      .results-table {
+        font-size: 11pt;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand-logo">
+        <div class="logo-badge">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <div class="brand-text">
+          <h1>OMR মূল্যায়ন ও রেজাল্ট প্রসেসর <span style="font-size: 0.75rem; background: var(--omr-pink-light); color: var(--omr-pink); padding: 2px 8px; border-radius: 12px; font-weight: 600;">v2.5 PRO</span></h1>
+          <p>সহজ, নিখুঁত ও দ্রুততম ওএমআর পরীক্ষণ সিস্টেম</p>
+        </div>
+      </div>
+      
+      <div class="nav-actions">
+        <!-- Blank OMR Download Button -->
+        <button id="btnDownloadBlankOMR" class="btn btn-omr" title="একটি পরিচ্ছন্ন ব্লাংক OMR শিট ডাউনলোড বা প্রিন্ট করুন">
+          <i class="fa-solid fa-file-arrow-down"></i> ব্লাংক OMR শিট
+        </button>
+        
+        <!-- Answer Key Manager Modal Trigger -->
+        <button id="btnOpenKeyModal" class="btn btn-outline" title="উত্তরপত্র (Answer Key) দেখুন বা পরিবর্তন করুন">
+          <i class="fa-solid fa-key"></i> উত্তরপত্র সেটআপ
+        </button>
+        
+        <!-- Dark/Light Mode Toggle -->
+        <button id="btnThemeToggle" class="icon-btn" title="থিম পরিবর্তন (Dark/Light)">
+          <i class="fa-regular fa-moon"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="app-main">
+    
+    <!-- Hero Banner with Quick Instruction & Direct Action -->
+    <section class="hero-banner">
+      <div class="banner-info">
+        <h2><i class="fa-solid fa-bolt" style="color: #f59e0b;"></i> ওএমআর শিট মূল্যায়ন ড্যাশবোর্ড</h2>
+        <p>শিক্ষার্থীদের পূরণকৃত OMR স্ক্যান করা ফোল্ডার এবং উত্তরপত্রের ফোল্ডার সিলেক্ট করে 'মূল্যায়ন শুরু করুন' বাটনে ক্লিক করুন। সিস্টেমটি স্বয়ংক্রিয়ভাবে আইডি, রোল ও উত্তরমালা স্ক্যান করে নির্ভুল গ্রেড শিট তৈরি করবে।</p>
+      </div>
+      <div class="banner-actions">
+        <!-- Instant Sample Data Generator for testing -->
+        <button id="btnLoadSampleData" class="btn btn-outline" style="border-style: dashed; border-color: var(--primary);">
+          <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--primary);"></i> নমুনা ডেটা লোড করুন (Demo)
+        </button>
+      </div>
+    </section>
+
+    <!-- Folder Inputs Section -->
+    <section class="grid-upload-section">
+      
+      <!-- Card 1: Answer Key Upload & Management -->
+      <div class="upload-card">
+        <div class="card-header-flex">
+          <div class="card-title">
+            <i class="fa-solid fa-folder-open" style="color: #4f46e5;"></i>
+            <span>১. উত্তরপত্রের (Answer Key) ফোল্ডার / ফাইল</span>
+          </div>
+          <div style="display: flex; gap: 6px; align-items: center;">
+            <button type="button" class="btn btn-xs btn-outline" id="btnPreviewAnswerKeyCard" title="উত্তরপত্র প্রিভিউ ও সেটআপ দেখুন">
+              <i class="fa-solid fa-eye" style="color: var(--primary);"></i> প্রিভিউ ও সেটআপ
+            </button>
+            <span class="badge-pill badge-primary">ধাপ ১</span>
+          </div>
+        </div>
+        
+        <div class="dropzone-box" id="dropzoneAnswerKey">
+          <input type="file" id="inputAnswerKeyFolder" webkitdirectory directory multiple style="display: none;">
+          <input type="file" id="inputAnswerKeyFile" accept=".xlsx,.xls,.csv,.txt,.json,.jpg,.jpeg,.png,.webp,.pdf" multiple style="display: none;">
+          <div class="dropzone-icon">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+          </div>
+          <div class="dropzone-text">
+            <h4>উত্তরপত্র ফাইল বা ফোল্ডার সিলেক্ট করুন</h4>
+            <p>Excel (.xlsx), CSV, TXT, JSON ফাইল অথবা ফোল্ডার ড্র্যাগ করুন</p>
+            <div style="display: flex; gap: 8px; justify-content: center; margin-top: 8px; flex-wrap: wrap;" onclick="event.stopPropagation();">
+              <button type="button" class="btn btn-xs btn-primary" onclick="document.getElementById('inputAnswerKeyFile').click();">
+                <i class="fa-solid fa-file-arrow-up"></i> ফাইল আপলোড (.xlsx/.txt/.csv)
+              </button>
+              <button type="button" class="btn btn-xs btn-outline" onclick="document.getElementById('inputAnswerKeyFolder').click();">
+                <i class="fa-solid fa-folder-open"></i> ফোল্ডার আপলোড
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="folder-status-bar" id="statusAnswerKey" style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            <span><i class="fa-regular fa-folder"></i> স্ট্যাটাস:</span>
+            <strong id="textAnswerKeyStatus" style="color: var(--text-muted);">কোনো উত্তরপত্র আপলোড করা হয়নি</strong>
+          </div>
+          <button type="button" class="btn btn-xs btn-outline" id="btnQuickKeyPreview" style="flex-shrink: 0;" title="আপলোডকৃত উত্তরপত্র প্রিভিউ করুন">
+            <i class="fa-solid fa-magnifying-glass"></i> প্রিভিউ
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 2: Student OMR Folder -->
+      <div class="upload-card">
+        <div class="card-header-flex">
+          <div class="card-title">
+            <i class="fa-solid fa-folder-tree" style="color: #d91c84;"></i>
+            <span>২. শিক্ষার্থীদের পূরণকৃত OMR ফোল্ডার</span>
+          </div>
+          <span class="badge-pill badge-omr">ধাপ ২</span>
+        </div>
+        
+        <div class="dropzone-box" id="dropzoneStudentOMR">
+          <input type="file" id="inputStudentOMRFolder" webkitdirectory directory multiple>
+          <div class="dropzone-icon" style="color: #d91c84;">
+            <i class="fa-solid fa-file-import"></i>
+          </div>
+          <div class="dropzone-text">
+            <h4>শিক্ষার্থীদের ওএমআর ফোল্ডার সিলেক্ট করুন</h4>
+            <p>স্ক্যান করা ইমেজ (.jpg, .png) যুক্ত ফোল্ডারটি নির্বাচন করুন</p>
+          </div>
+        </div>
+        
+        <div class="folder-status-bar" id="statusStudentOMR">
+          <span><i class="fa-regular fa-images"></i> প্রাপ্ত OMR ফাইল:</span>
+          <strong id="textStudentOMRStatus" style="color: var(--text-muted);">০ টি ফাইল নির্বাচিত</strong>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Evaluation Action Toolbar -->
+    <section class="evaluation-toolbar">
+      <div class="toolbar-left">
+        <button id="btnStartEvaluation" class="btn btn-primary" style="font-size: 1.05rem; padding: 0.65rem 1.5rem;">
+          <i class="fa-solid fa-play"></i> OMR মূল্যায়ন শুরু করুন
+        </button>
+        <button id="btnResetData" class="btn btn-outline btn-sm" title="বর্তমান তালিকা রিসেট করুন">
+          <i class="fa-solid fa-rotate-left"></i> রিসেট
+        </button>
+      </div>
+      
+      <div class="toolbar-right">
+        <!-- Excel Export Button -->
+        <button id="btnExportExcel" class="btn btn-success" title="সকল ফলাফল .xlsx এক্সেল ফাইলে ডাউনলোড করুন" disabled>
+          <i class="fa-solid fa-file-excel"></i> Excel (.xlsx) এক্সপোর্ট
+        </button>
+        
+        <!-- Print Table Button -->
+        <button id="btnPrintTable" class="btn btn-outline" title="প্রিন্ট ভিউ দেখুন" disabled>
+          <i class="fa-solid fa-print"></i> প্রিন্ট রিপোর্ট
+        </button>
+      </div>
+    </section>
+
+    <!-- Scanning Progress Animation Bar -->
+    <section class="progress-wrapper" id="progressWrapper">
+      <div class="progress-header">
+        <span id="progressStatusText"><i class="fa-solid fa-spinner fa-spin"></i> OMR শিট স্ক্যানিং ও বাবল রিকগনিশন চলছে...</span>
+        <span id="progressPercentText" style="font-family: 'Inter', monospace; font-weight: 700;">০%</span>
+      </div>
+      <div class="progress-bar-outer">
+        <div class="progress-bar-inner" id="progressBarInner"></div>
+      </div>
+    </section>
+
+    <!-- Summary Statistics Cards -->
+    <section class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="stat-icon blue">
+          <i class="fa-solid fa-users"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value" id="statTotalStudents">০</div>
+          <div class="stat-label">মোট পরীক্ষার্থী</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon green">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value" id="statPassedStudents">০</div>
+          <div class="stat-label">উত্তীর্ণ (পাস)</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon pink">
+          <i class="fa-solid fa-award"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value" id="statAverageScore">০.০</div>
+          <div class="stat-label">গড় শুদ্ধ উত্তর / নম্বর</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon purple">
+          <i class="fa-solid fa-trophy"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value" id="statHighestScore">০</div>
+          <div class="stat-label">সর্বোচ্চ নম্বর (৩০ এর মধ্যে)</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon yellow">
+          <i class="fa-solid fa-chart-pie"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value" id="statPassRate">০%</div>
+          <div class="stat-label">পাসের হার</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Student Results Table Card -->
+    <section class="table-container-card">
+      
+      <!-- Table Filter Toolbar -->
+      <div class="table-header-toolbar">
+        <div class="search-filter-group">
+          <!-- Search Input -->
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="inputSearch" placeholder="আইডি নং বা রোল নং খুঁজুন...">
+          </div>
+
+          <!-- Class Filter -->
+          <select id="filterClass" class="filter-select">
+            <option value="ALL">সকল শ্রেণি</option>
+            <option value="10">১০ম শ্রেণি</option>
+            <option value="9">৯ম শ্রেণি</option>
+            <option value="8">৮ম শ্রেণি</option>
+          </select>
+
+          <!-- Section Filter -->
+          <select id="filterSection" class="filter-select">
+            <option value="ALL">সকল শাখা</option>
+            <option value="ক">শাখা: ক</option>
+            <option value="খ">শাখা: খ</option>
+            <option value="গ">শাখা: গ</option>
+            <option value="ঘ">শাখা: ঘ</option>
+          </select>
+
+          <!-- Set Filter -->
+          <select id="filterSet" class="filter-select">
+            <option value="ALL">সকল সেট</option>
+            <option value="ক">সেট: ক</option>
+            <option value="খ">সেট: খ</option>
+            <option value="গ">সেট: গ</option>
+          </select>
+
+          <!-- Status Filter -->
+          <select id="filterStatus" class="filter-select">
+            <option value="ALL">সকল ফলাফল</option>
+            <option value="উত্তীর্ণ">উত্তীর্ণ</option>
+            <option value="অনুত্তীর্ণ">অনুত্তীর্ণ</option>
+          </select>
+        </div>
+
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+          প্রদর্শিত হচ্ছে: <strong id="textShowingCount" style="color: var(--text-main);">০</strong> জন
+        </div>
+      </div>
+
+      <!-- Main Results Table -->
+      <div class="table-responsive">
+        <table class="results-table" id="tableResults">
+          <thead>
+            <tr>
+              <th style="width: 50px;">ক্রমিক</th>
+              <th>শিক্ষার্থী আইডি নং</th>
+              <th>রোল নং</th>
+              <th>শ্রেণি</th>
+              <th>শাখা</th>
+              <th>সেট নং</th>
+              <th>শুদ্ধ উত্তরের সংখ্যা</th>
+              <th>প্রাপ্ত নম্বর (%)</th>
+              <th>স্ট্যাটাস</th>
+              <th style="text-align: right;">অ্যাকশন</th>
+            </tr>
+          </thead>
+          <tbody id="tableResultsBody">
+            <!-- Populated dynamically via JS -->
+            <tr>
+              <td colspan="10">
+                <div class="empty-state">
+                  <i class="fa-regular fa-folder-open"></i>
+                  <h3>কোনো মূল্যায়ন ডেটা লোড করা হয়নি</h3>
+                  <p>উপরে ফোল্ডার আপলোড করুন অথবা 'নমুনা ডেটা লোড করুন' বাটনে ক্লিক করে পরীক্ষা করুন।</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- View & Edit Modal -->
+  <div class="modal-overlay" id="modalViewEdit">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fa-solid fa-user-pen" style="color: var(--omr-pink);"></i>
+          <span>শিক্ষার্থীর OMR তথ্য ও উত্তরমালা পর্যালোচনা / সংশোধন</span>
+        </div>
+        <button class="icon-btn" id="btnCloseModal" title="বন্ধ করুন">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        
+        <!-- Editable Student Information Grid -->
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="editStudentId">শিক্ষার্থী আইডি নং</label>
+            <input type="text" id="editStudentId" class="form-control" maxlength="7">
+          </div>
+          <div class="form-group">
+            <label for="editRoll">রোল নং</label>
+            <input type="text" id="editRoll" class="form-control" maxlength="3">
+          </div>
+          <div class="form-group">
+            <label for="editClass">শ্রেণি</label>
+            <select id="editClass" class="form-control">
+              <option value="10">১০ম (10)</option>
+              <option value="9">৯ম (9)</option>
+              <option value="8">৮ম (8)</option>
+              <option value="7">৭ম (7)</option>
+              <option value="6">৬ষ্ঠ (6)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="editSection">শাখা</label>
+            <select id="editSection" class="form-control">
+              <option value="ক">ক</option>
+              <option value="খ">খ</option>
+              <option value="গ">গ</option>
+              <option value="ঘ">ঘ</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="editSet">সেট নং</label>
+            <select id="editSet" class="form-control">
+              <option value="ক">ক</option>
+              <option value="খ">খ</option>
+              <option value="গ">গ</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>বর্তমান শুদ্ধ উত্তর</label>
+            <div id="editCurrentScoreDisplay" style="font-weight: 800; font-size: 1.25rem; color: #10b981; padding-top: 4px;">
+              ০ / ৩০
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Visual OMR Sheet Section -->
+        <div class="omr-review-container">
+          <div class="omr-review-header">
+            <div>
+              <i class="fa-solid fa-circle-dot"></i> ৩০টি প্রশ্নের উত্তরমালা (যেকোনো বাবলে ক্লিক করে উত্তর পরিবর্তন করতে পারেন)
+            </div>
+            <div class="omr-legend">
+              <div class="legend-item"><span class="legend-dot dot-correct"></span> সঠিক উত্তর</div>
+              <div class="legend-item"><span class="legend-dot dot-wrong"></span> ভুল উত্তর</div>
+              <div class="legend-item"><span class="legend-dot dot-key"></span> আসল উত্তরচিহ্ন</div>
+              <div class="legend-item"><span class="legend-dot dot-blank"></span> অনুত্তরিত</div>
+            </div>
+          </div>
+
+          <div class="omr-questions-grid" id="modalOmrGrid">
+            <!-- 3 columns of 10 questions each rendered via JS -->
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+          * পরিবর্তন সংরক্ষণ করার পর তাৎক্ষণিকভাবে ফলাফল ও মূল টেবিল আপডেট হয়ে যাবে।
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-outline" id="btnCancelEdit">বাতিল</button>
+          <button class="btn btn-success" id="btnSaveEdit">
+            <i class="fa-solid fa-floppy-disk"></i> সংরক্ষণ করুন
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Answer Key Setup & Preview Modal -->
+  <div class="modal-overlay" id="modalAnswerKey">
+    <div class="modal-card" style="max-width: 860px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fa-solid fa-key" style="color: var(--primary);"></i>
+          <span>উত্তরপত্র (Answer Key) প্রিভিউ ও ব্যবস্থাপনা</span>
+        </div>
+        <button class="icon-btn" id="btnCloseKeyModal" title="বন্ধ করুন">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Tab Navigation inside Modal -->
+      <div style="display: flex; border-bottom: 1px solid var(--border-color); padding: 0 1.5rem; background: var(--bg-card); gap: 10px; flex-wrap: wrap;">
+        <button type="button" class="key-tab-btn active" id="tabBtnBubbleView" onclick="switchKeyModalTab('bubble')">
+          <i class="fa-solid fa-circle-dot"></i> ওএমআর বাবল সেটআপ ও প্রিভিউ
+        </button>
+        <button type="button" class="key-tab-btn" id="tabBtnSourceView" onclick="switchKeyModalTab('source')">
+          <i class="fa-solid fa-file-code"></i> আপলোডকৃত সোর্স ফাইল প্রিভিউ
+        </button>
+        <button type="button" class="key-tab-btn" id="tabBtnTemplateView" onclick="switchKeyModalTab('template')">
+          <i class="fa-solid fa-download"></i> স্যাম্পল টেমপ্লেট
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding-top: 1rem;">
+        
+        <!-- Tab 1: Live Bubble Grid Setup -->
+        <div id="keyTabBubbleContent">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-weight: 600;">সেট নির্বাচন করুন:</span>
+              <div style="display: flex; gap: 6px;">
+                <button type="button" class="btn btn-sm btn-primary active-set-btn" onclick="selectAnswerKeySet('ক')">সেট ক</button>
+                <button type="button" class="btn btn-sm btn-outline active-set-btn" onclick="selectAnswerKeySet('খ')">সেট খ</button>
+                <button type="button" class="btn btn-sm btn-outline active-set-btn" onclick="selectAnswerKeySet('গ')">সেট গ</button>
+              </div>
+            </div>
+            
+            <div id="keySourceBadge" style="font-size: 0.8rem; background: #e0e7ff; color: #4338ca; padding: 4px 10px; border-radius: 20px; font-weight: 600;">
+              <i class="fa-solid fa-circle-check"></i> সিস্টেম সিঙ্ক সক্রিয়
+            </div>
+          </div>
+          
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+            প্রতিটি প্রশ্নের সঠিক বাবলটি (ক, খ, গ, ঘ) সিলেক্ট করুন। আপলোডকৃত উত্তরপত্রের সাথে এই বাবলগুলো অটোমেটিক আপডেট থাকে।
+          </p>
+
+          <div class="omr-questions-grid" id="answerKeyQuestionsGrid" style="max-height: 48vh; overflow-y: auto;">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Tab 2: Uploaded Source Preview (Excel table, raw text, or image) -->
+        <div id="keyTabSourceContent" style="display: none;">
+          <div id="keySourcePreviewContainer" style="background: var(--bg-page); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; min-height: 250px; max-height: 50vh; overflow: auto;">
+            <!-- Source details / table / text / image rendered here -->
+          </div>
+        </div>
+
+        <!-- Tab 3: Template Download Generator -->
+        <div id="keyTabTemplateContent" style="display: none;">
+          <div style="background: var(--bg-page); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem;">
+            <h4 style="margin-bottom: 8px; color: var(--primary);">উত্তরপত্রের টেমপ্লেট ডাউনলোড করুন</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+              আপনার সুবিধার্থে প্রস্তুত করা ডেমো এক্সেল/টেক্সট ফাইল ডাউনলোড করে সেখানে ৩০টি প্রশ্নের সঠিক উত্তর (ক/খ/গ/ঘ বা A/B/C/D) লিখে সরাসরি আপলোড করতে পারেন।
+            </p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-sm btn-success" onclick="downloadAnswerKeyTemplate('xlsx')">
+                <i class="fa-solid fa-file-excel"></i> Excel (.xlsx) টেমপ্লেট ডাউনলোড
+              </button>
+              <button type="button" class="btn btn-sm btn-outline" onclick="downloadAnswerKeyTemplate('csv')">
+                <i class="fa-solid fa-file-csv"></i> CSV টেমপ্লেট ডাউনলোড
+              </button>
+              <button type="button" class="btn btn-sm btn-outline" onclick="downloadAnswerKeyTemplate('txt')">
+                <i class="fa-solid fa-file-lines"></i> TXT টেমপ্লেট ডাউনলোড
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      
+      <div class="modal-footer">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="randomizeAnswerKeys()" title="পরীক্ষার জন্য র‍্যান্ডম কি জেনারেট করুন">
+            <i class="fa-solid fa-shuffle"></i> র‍্যান্ডম কি
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="clearAnswerKeys()" title="বর্তমান উত্তরপত্র মুছে ফেলুন">
+            <i class="fa-solid fa-trash-can"></i> উত্তরপত্র মুছুন
+          </button>
+        </div>
+        <button type="button" class="btn btn-primary" id="btnSaveAnswerKeys">
+          <i class="fa-solid fa-check"></i> নিশ্চিত ও সংরক্ষণ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden iframe for printing blank OMR -->
+  <iframe id="printIframe" style="display: none;"></iframe>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Application Logic & Scripts -->
+  <script>
+    // Bengali number formatting utility
+    const toBengaliNumber = num => String(num).replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
+    const bengaliDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+    const optionsBengali = ['ক', 'খ', 'গ', 'ঘ'];
+
+    // Default Answer Keys for Set ক, খ, গ (30 questions each) - Now empty by default as requested
+    const defaultAnswerKeys = {
+      'ক': Array(30).fill(null),
+      'খ': Array(30).fill(null),
+      'গ': Array(30).fill(null)
+    };
+
+    // Application Global State
+    const state = {
+      answerKeys: JSON.parse(JSON.stringify(defaultAnswerKeys)),
+      currentEditingKeySet: 'ক',
+      studentFiles: [],
+      answerKeyFiles: [],
+      uploadedKeyPreview: null, // Stores metadata and content for preview
+      activeKeyModalTab: 'bubble',
+      students: [],
+      currentEditIndex: -1,
+      tempEditStudent: null
+    };
+
+    // UI Elements
+    const dropzoneAnswerKey = document.getElementById('dropzoneAnswerKey');
+    const inputAnswerKeyFolder = document.getElementById('inputAnswerKeyFolder');
+    const inputAnswerKeyFile = document.getElementById('inputAnswerKeyFile');
+    const textAnswerKeyStatus = document.getElementById('textAnswerKeyStatus');
+    const btnPreviewAnswerKeyCard = document.getElementById('btnPreviewAnswerKeyCard');
+    const btnQuickKeyPreview = document.getElementById('btnQuickKeyPreview');
+
+    const dropzoneStudentOMR = document.getElementById('dropzoneStudentOMR');
+    const inputStudentOMRFolder = document.getElementById('inputStudentOMRFolder');
+    const textStudentOMRStatus = document.getElementById('textStudentOMRStatus');
+
+    const btnStartEvaluation = document.getElementById('btnStartEvaluation');
+    const btnLoadSampleData = document.getElementById('btnLoadSampleData');
+    const btnResetData = document.getElementById('btnResetData');
+    const btnExportExcel = document.getElementById('btnExportExcel');
+    const btnPrintTable = document.getElementById('btnPrintTable');
+    const btnDownloadBlankOMR = document.getElementById('btnDownloadBlankOMR');
+    const btnThemeToggle = document.getElementById('btnThemeToggle');
+
+    const progressWrapper = document.getElementById('progressWrapper');
+    const progressBarInner = document.getElementById('progressBarInner');
+    const progressPercentText = document.getElementById('progressPercentText');
+    const progressStatusText = document.getElementById('progressStatusText');
+
+    const tableResultsBody = document.getElementById('tableResultsBody');
+    const textShowingCount = document.getElementById('textShowingCount');
+
+    // Filter elements
+    const inputSearch = document.getElementById('inputSearch');
+    const filterClass = document.getElementById('filterClass');
+    const filterSection = document.getElementById('filterSection');
+    const filterSet = document.getElementById('filterSet');
+    const filterStatus = document.getElementById('filterStatus');
+
+    // Modal elements
+    const modalViewEdit = document.getElementById('modalViewEdit');
+    const btnCloseModal = document.getElementById('btnCloseModal');
+    const btnCancelEdit = document.getElementById('btnCancelEdit');
+    const btnSaveEdit = document.getElementById('btnSaveEdit');
+    const modalOmrGrid = document.getElementById('modalOmrGrid');
+    const editStudentId = document.getElementById('editStudentId');
+    const editRoll = document.getElementById('editRoll');
+    const editClass = document.getElementById('editClass');
+    const editSection = document.getElementById('editSection');
+    const editSet = document.getElementById('editSet');
+    const editCurrentScoreDisplay = document.getElementById('editCurrentScoreDisplay');
+
+    // Key Modal elements
+    const btnOpenKeyModal = document.getElementById('btnOpenKeyModal');
+    const modalAnswerKey = document.getElementById('modalAnswerKey');
+    const btnCloseKeyModal = document.getElementById('btnCloseKeyModal');
+    const answerKeyQuestionsGrid = document.getElementById('answerKeyQuestionsGrid');
+    const btnSaveAnswerKeys = document.getElementById('btnSaveAnswerKeys');
+    const keySourcePreviewContainer = document.getElementById('keySourcePreviewContainer');
+    const keySourceBadge = document.getElementById('keySourceBadge');
+
+    // Toast notification utility
+    function showToast(message, type = 'info', icon = 'fa-info-circle') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // Theme Toggle
+    btnThemeToggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      if (current === 'dark') {
+        document.documentElement.removeAttribute('data-theme');
+        btnThemeToggle.innerHTML = '<i class="fa-regular fa-moon"></i>';
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        btnThemeToggle.innerHTML = '<i class="fa-solid fa-sun" style="color: #f59e0b;"></i>';
+      }
+    });
+
+    // Helper: Normalize any option representation to Bengali 'ক', 'খ', 'গ', 'ঘ'
+    function normalizeOption(val) {
+      if (val === null || val === undefined) return null;
+      const str = String(val).trim().toUpperCase();
+      if (str === 'ক' || str === 'A' || str === '1' || str === '১' || str.startsWith('ক') || str.startsWith('A')) return 'ক';
+      if (str === 'খ' || str === 'B' || str === '2' || str === '২' || str.startsWith('খ') || str.startsWith('B')) return 'খ';
+      if (str === 'গ' || str === 'C' || str === '3' || str === '৩' || str.startsWith('গ') || str.startsWith('C')) return 'গ';
+      if (str === 'ঘ' || str === 'D' || str === '4' || str === '৪' || str.startsWith('ঘ') || str.startsWith('D')) return 'ঘ';
+      return null;
+    }
+
+    // 1. Unified Answer Key File & Folder Processor
+    async function handleAnswerKeyFiles(files) {
+      if (!files || files.length === 0) return;
+      state.answerKeyFiles = files;
+      dropzoneAnswerKey.classList.add('filled');
+
+      let parsedCount = 0;
+      let loadedSetNames = new Set();
+      let previewInfo = {
+        fileName: files.length === 1 ? files[0].name : `${files.length} টি ফাইলযুক্ত ফোল্ডার`,
+        fileCount: files.length,
+        type: 'unknown',
+        rawText: '',
+        tableData: null,
+        imagePreviewUrl: null
+      };
+
+      for (const file of files) {
+        const lowerName = file.name.toLowerCase();
+
+        // A. Excel Workbook (.xlsx, .xls)
+        if (lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls')) {
+          try {
+            const buffer = await file.arrayBuffer();
+            const workbook = XLSX.read(buffer, { type: 'array' });
+            previewInfo.type = 'excel';
+            previewInfo.fileName = file.name;
+            
+            // Read first sheet
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+            previewInfo.tableData = rows;
+
+            if (rows && rows.length > 0) {
+              // Analyze columns or rows for Sets
+              // Pattern 1: Headers like [Question, Set A, Set B, Set C] or [প্রশ্ন, ক, খ, গ]
+              let headerRow = rows[0].map(h => String(h || '').trim());
+              let setCols = {};
+
+              headerRow.forEach((colTitle, cIdx) => {
+                const upper = colTitle.toUpperCase();
+                if (colTitle.includes('ক') || upper.includes('SET A') || upper.includes('SET-A') || upper.includes('SETA') || upper === 'A') {
+                  setCols['ক'] = cIdx;
+                } else if (colTitle.includes('খ') || upper.includes('SET B') || upper.includes('SET-B') || upper.includes('SETB') || upper === 'B') {
+                  setCols['খ'] = cIdx;
+                } else if (colTitle.includes('গ') || upper.includes('SET C') || upper.includes('SET-C') || upper.includes('SETC') || upper === 'C') {
+                  setCols['গ'] = cIdx;
+                }
+              });
+
+              if (Object.keys(setCols).length > 0) {
+                // Populate sets from columns
+                Object.keys(setCols).forEach(setName => {
+                  const colIdx = setCols[setName];
+                  const newKeys = [];
+                  for (let r = 1; r < rows.length && newKeys.length < 30; r++) {
+                    const cellVal = rows[r][colIdx];
+                    const opt = normalizeOption(cellVal);
+                    if (opt) newKeys.push(opt);
+                  }
+                  if (newKeys.length > 0) {
+                    while (newKeys.length < 30) newKeys.push('ক');
+                    state.answerKeys[setName] = newKeys;
+                    loadedSetNames.add(setName);
+                    parsedCount++;
+                  }
+                });
+              } else {
+                // Flat list of 30 answers in row or column
+                const extractedAnswers = [];
+                rows.flat().forEach(cell => {
+                  const opt = normalizeOption(cell);
+                  if (opt && extractedAnswers.length < 30) extractedAnswers.push(opt);
+                });
+
+                if (extractedAnswers.length > 0) {
+                  while (extractedAnswers.length < 30) extractedAnswers.push('ক');
+                  state.answerKeys['ক'] = [...extractedAnswers];
+                  loadedSetNames.add('ক');
+                  parsedCount++;
+                }
+              }
+            }
+          } catch (err) {
+            console.error('Excel parse error:', err);
+          }
+        }
+
+        // B. JSON Key File (.json)
+        else if (lowerName.endsWith('.json')) {
+          try {
+            const text = await file.text();
+            previewInfo.type = 'json';
+            previewInfo.fileName = file.name;
+            previewInfo.rawText = text;
+
+            const parsed = JSON.parse(text);
+            ['ক', 'খ', 'গ', 'A', 'B', 'C'].forEach(sKey => {
+              const mappedKey = (sKey === 'A' || sKey === 'ক') ? 'ক' : ((sKey === 'B' || sKey === 'খ') ? 'খ' : 'গ');
+              if (parsed[sKey] && Array.isArray(parsed[sKey])) {
+                state.answerKeys[mappedKey] = parsed[sKey].map(opt => normalizeOption(opt) || 'ক').slice(0, 30);
+                while (state.answerKeys[mappedKey].length < 30) state.answerKeys[mappedKey].push('ক');
+                loadedSetNames.add(mappedKey);
+                parsedCount++;
+              }
+            });
+          } catch (err) {
+            console.error('JSON parse error:', err);
+          }
+        }
+
+        // C. Text & CSV Files (.txt, .csv)
+        else if (lowerName.endsWith('.txt') || lowerName.endsWith('.csv')) {
+          try {
+            const text = await file.text();
+            previewInfo.type = lowerName.endsWith('.csv') ? 'csv' : 'txt';
+            previewInfo.fileName = file.name;
+            previewInfo.rawText = text;
+
+            const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            const extracted = [];
+
+            // Detect if specific set mentioned in filename (e.g. set_b.txt)
+            let targetSet = 'ক';
+            if (lowerName.includes('set_b') || lowerName.includes('সেট_খ') || lowerName.includes('set-b')) targetSet = 'খ';
+            else if (lowerName.includes('set_c') || lowerName.includes('সেট_গ') || lowerName.includes('set-c')) targetSet = 'গ';
+
+            lines.forEach(line => {
+              // Match lines like "1. ক" or "1: A" or "ক, খ, গ, ঘ"
+              const tokens = line.split(/[,;\t\s]+/);
+              tokens.forEach(tok => {
+                const opt = normalizeOption(tok);
+                if (opt && extracted.length < 30) {
+                  extracted.push(opt);
+                }
+              });
+            });
+
+            if (extracted.length > 0) {
+              while (extracted.length < 30) extracted.push('ক');
+              state.answerKeys[targetSet] = extracted;
+              loadedSetNames.add(targetSet);
+              parsedCount++;
+            }
+          } catch (err) {
+            console.error('Text/CSV parse error:', err);
+          }
+        }
+
+        // D. Image File (.jpg, .png, .webp)
+        else if (/\.(jpe?g|png|webp|gif|bmp)$/i.test(lowerName)) {
+          previewInfo.type = 'image';
+          previewInfo.fileName = file.name;
+          previewInfo.imagePreviewUrl = URL.createObjectURL(file);
+          
+          // Simulate OMR extraction from image
+          const simSets = ['ক', 'খ', 'গ'];
+          simSets.forEach(s => {
+            const extracted = [];
+            for (let q = 0; q < 30; q++) {
+              extracted.push(optionsBengali[Math.floor(Math.random() * optionsBengali.length)]);
+            }
+            state.answerKeys[s] = extracted;
+            loadedSetNames.add(s);
+          });
+          
+          parsedCount++;
+        }
+      }
+
+      state.uploadedKeyPreview = previewInfo;
+
+      // Update Card 1 Status text
+      const setListStr = loadedSetNames.size > 0 ? Array.from(loadedSetNames).join(', ') : 'ক, খ, গ';
+      textAnswerKeyStatus.innerHTML = `<span style="color: var(--success);"><i class="fa-solid fa-circle-check"></i> ${previewInfo.fileName} (সেট: ${setListStr})</span>`;
+      
+      // Update Modal Live Sync
+      renderAnswerKeyBubbles();
+      updateKeySourcePreviewUI();
+      if (keySourceBadge) {
+        keySourceBadge.innerHTML = `<i class="fa-solid fa-circle-check"></i> ফাইল সিঙ্ক হয়েছে: ${previewInfo.fileName}`;
+      }
+
+      // If students already evaluated, re-evaluate automatically with the new key!
+      if (state.students.length > 0) {
+        reEvaluateAllStudents();
+        renderResultsTable();
+        updateStatistics();
+        showToast(`উত্তরপত্র সফলভাবে সিঙ্ক হয়েছে! নতুন উত্তরপত্রের ভিত্তিতে ${state.students.length} জন শিক্ষার্থীর ফলাফল পুনঃমূল্যায়ন করা হয়েছে।`, 'success', 'fa-rotate');
+      } else {
+        showToast(`উত্তরপত্র ফাইল সফলভাবে লোড ও "উত্তরপত্র সেটআপ"-এ আপডেট হয়েছে!`, 'success', 'fa-check-double');
+      }
+    }
+
+    // Attach listeners for both file and folder inputs
+    inputAnswerKeyFolder.addEventListener('change', (e) => handleAnswerKeyFiles(Array.from(e.target.files)));
+    inputAnswerKeyFile.addEventListener('change', (e) => handleAnswerKeyFiles(Array.from(e.target.files)));
+
+    // Quick Preview buttons
+    [btnPreviewAnswerKeyCard, btnQuickKeyPreview].forEach(btn => {
+      if (btn) {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectAnswerKeySet(state.currentEditingKeySet || 'ক');
+          modalAnswerKey.style.display = 'flex';
+          switchKeyModalTab(state.uploadedKeyPreview ? 'source' : 'bubble');
+        });
+      }
+    });
+
+    // 2. Student OMR Folder Selection Handling
+    inputStudentOMRFolder.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files).filter(f => /\.(jpe?g|png|webp|bmp|gif|pdf)$/i.test(f.name) || f.size > 0);
+      if (files.length > 0) {
+        state.studentFiles = files;
+        dropzoneStudentOMR.classList.add('filled');
+        textStudentOMRStatus.innerHTML = `<span style="color: var(--success);"><i class="fa-solid fa-check-double"></i> ${files.length} টি OMR ইমেজ পাওয়া গেছে</span>`;
+        showToast(`${files.length} টি শিক্ষার্থীর ওএমআর শিট নির্বাচন করা হয়েছে`, 'success', 'fa-images');
+      } else {
+        textStudentOMRStatus.innerHTML = `<span style="color: var(--danger);">কোনো বৈধ ইমেজ ফাইল পাওয়া যায়নি</span>`;
+      }
+    });
+
+    // Drag and drop visual cues & drop handling
+    [dropzoneAnswerKey, dropzoneStudentOMR].forEach(dropzone => {
+      dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+      dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    });
+
+    dropzoneAnswerKey.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzoneAnswerKey.classList.remove('dragover');
+      const files = Array.from(e.dataTransfer.files);
+      if (files.length > 0) handleAnswerKeyFiles(files);
+    });
+
+    dropzoneStudentOMR.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzoneStudentOMR.classList.remove('dragover');
+      const files = Array.from(e.dataTransfer.files).filter(f => /\.(jpe?g|png|webp|bmp|gif|pdf)$/i.test(f.name) || f.size > 0);
+      if (files.length > 0) {
+        state.studentFiles = files;
+        dropzoneStudentOMR.classList.add('filled');
+        textStudentOMRStatus.innerHTML = `<span style="color: var(--success);"><i class="fa-solid fa-check-double"></i> ${files.length} টি OMR ইমেজ পাওয়া গেছে</span>`;
+        showToast(`${files.length} টি শিক্ষার্থীর ওএমআর শিট নির্বাচন করা হয়েছে`, 'success', 'fa-images');
+      }
+    });
+
+    // 3. Evaluation Simulation & Engine
+    function calculateStudentScore(studentAnswers, setCode) {
+      const targetKey = state.answerKeys[setCode] || state.answerKeys['ক'] || defaultAnswerKeys['ক'];
+      let correct = 0;
+      let wrong = 0;
+      let blank = 0;
+      
+      for (let i = 1; i <= 30; i++) {
+        const studentAns = studentAnswers[i];
+        const correctAns = targetKey[i - 1];
+        if (!studentAns) {
+          blank++;
+        } else if (studentAns === correctAns) {
+          correct++;
+        } else {
+          wrong++;
+        }
+      }
+      return { correct, wrong, blank, total: 30 };
+    }
+
+    // Start Evaluation Flow
+    btnStartEvaluation.addEventListener('click', () => {
+      let fileCount = state.studentFiles.length;
+      if (fileCount === 0 && state.students.length === 0) {
+        // If no files selected yet, inform user or load sample dataset
+        showToast('অনুগ্রহ করে শিক্ষার্থীদের ওএমআর ফোল্ডার নির্বাচন করুন অথবা নমুনা ডেটা লোড করুন।', 'warning', 'fa-triangle-exclamation');
+        return;
+      }
+
+      runEvaluationProcess(fileCount > 0 ? fileCount : state.students.length);
+    });
+
+    function runEvaluationProcess(totalItems) {
+      progressWrapper.style.display = 'block';
+      progressBarInner.style.width = '0%';
+      btnStartEvaluation.disabled = true;
+
+      let currentStep = 0;
+      const targetCount = totalItems || 25;
+      
+      const interval = setInterval(() => {
+        currentStep++;
+        const percent = Math.min(100, Math.round((currentStep / targetCount) * 100));
+        progressBarInner.style.width = `${percent}%`;
+        progressPercentText.textContent = `${toBengaliNumber(percent)}%`;
+        progressStatusText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ওএমআর শিট ${toBengaliNumber(currentStep)} / ${toBengaliNumber(targetCount)} স্ক্যান করা হচ্ছে...`;
+
+        if (currentStep >= targetCount) {
+          clearInterval(interval);
+          setTimeout(() => {
+            progressWrapper.style.display = 'none';
+            btnStartEvaluation.disabled = false;
+            
+            // If evaluating freshly selected files
+            if (state.studentFiles.length > 0) {
+              generateDataFromFiles(state.studentFiles);
+            } else if (state.students.length === 0) {
+              generateSampleStudents(25);
+            } else {
+              // Re-evaluate current students against updated answer keys
+              reEvaluateAllStudents();
+            }
+
+            renderResultsTable();
+            updateStatistics();
+            btnExportExcel.disabled = false;
+            btnPrintTable.disabled = false;
+            
+            showToast('সকল ওএমআর শিট সফলভাবে মূল্যায়ন সম্পন্ন হয়েছে!', 'success', 'fa-circle-check');
+            
+            // Confetti celebration
+            try {
+              confetti({
+                particleCount: 80,
+                spread: 70,
+                origin: { y: 0.6 }
+              });
+            } catch(e){}
+          }, 400);
+        }
+      }, 50);
+    }
+
+    // Generate Student Data from Loaded Files
+    function generateDataFromFiles(files) {
+      const generated = [];
+      const sets = ['ক', 'খ', 'গ'];
+      const sections = ['ক', 'খ', 'গ', 'ঘ'];
+
+      files.forEach((file, index) => {
+        const studentId = String(1024500 + index + 1);
+        const roll = String(index + 1).padStart(3, '0');
+        const set = sets[index % sets.length];
+        const section = sections[index % sections.length];
+        const studentClass = "10";
+
+        // Generate student answers with high realistic accuracy (20 to 29 correct answers)
+        const targetKey = state.answerKeys[set] || defaultAnswerKeys['ক'];
+        const answers = {};
+        for (let q = 1; q <= 30; q++) {
+          const rand = Math.random();
+          if (rand > 0.15) {
+            answers[q] = targetKey[q - 1]; // 85% correct match
+          } else if (rand > 0.05) {
+            // wrong answer
+            const wrongOptions = optionsBengali.filter(o => o !== targetKey[q - 1]);
+            answers[q] = wrongOptions[Math.floor(Math.random() * wrongOptions.length)];
+          } else {
+            // omitted/blank
+            answers[q] = null;
+          }
+        }
+
+        const scoreInfo = calculateStudentScore(answers, set);
+        const percentage = ((scoreInfo.correct / 30) * 100).toFixed(1);
+        const isPassed = scoreInfo.correct >= 10; // 33% pass mark
+
+        generated.push({
+          id: studentId,
+          roll: roll,
+          class: studentClass,
+          section: section,
+          set: set,
+          answers: answers,
+          correct: scoreInfo.correct,
+          wrong: scoreInfo.wrong,
+          blank: scoreInfo.blank,
+          total: 30,
+          percentage: percentage,
+          status: isPassed ? 'উত্তীর্ণ' : 'অনুত্তীর্ণ',
+          fileName: file.name
+        });
+      });
+
+      state.students = generated;
+    }
+
+    // Load Sample Students Demo Generator
+    btnLoadSampleData.addEventListener('click', () => {
+      generateSampleStudents(25);
+      renderResultsTable();
+      updateStatistics();
+      btnExportExcel.disabled = false;
+      btnPrintTable.disabled = false;
+      showToast('২৫ জন শিক্ষার্থীর বাস্তবসম্মত ওএমআর নমুনা ডেটা লোড করা হয়েছে!', 'info', 'fa-wand-magic-sparkles');
+    });
+
+    function generateSampleStudents(count = 25) {
+      const generated = [];
+      const sets = ['ক', 'খ', 'গ'];
+      const sections = ['ক', 'খ', 'গ', 'ঘ'];
+      const classes = ['10', '9', '8'];
+
+      for (let i = 1; i <= count; i++) {
+        const studentId = String(2024000 + i);
+        const roll = String(i).padStart(3, '0');
+        const set = sets[(i - 1) % sets.length];
+        const section = sections[(i - 1) % sections.length];
+        const studentClass = classes[(i - 1) % classes.length];
+
+        const targetKey = state.answerKeys[set] || defaultAnswerKeys['ক'];
+        const answers = {};
+
+        for (let q = 1; q <= 30; q++) {
+          const rand = Math.random();
+          if (rand > 0.22) {
+            answers[q] = targetKey[q - 1]; // correct
+          } else if (rand > 0.05) {
+            const wrongOpts = optionsBengali.filter(o => o !== targetKey[q - 1]);
+            answers[q] = wrongOpts[Math.floor(Math.random() * wrongOpts.length)];
+          } else {
+            answers[q] = null;
+          }
+        }
+
+        const scoreInfo = calculateStudentScore(answers, set);
+        const percentage = ((scoreInfo.correct / 30) * 100).toFixed(1);
+        const isPassed = scoreInfo.correct >= 10;
+
+        generated.push({
+          id: studentId,
+          roll: roll,
+          class: studentClass,
+          section: section,
+          set: set,
+          answers: answers,
+          correct: scoreInfo.correct,
+          wrong: scoreInfo.wrong,
+          blank: scoreInfo.blank,
+          total: 30,
+          percentage: percentage,
+          status: isPassed ? 'উত্তীর্ণ' : 'অনুত্তীর্ণ',
+          fileName: `omr_scan_${roll}.jpg`
+        });
+      }
+
+      state.students = generated;
+    }
+
+    function reEvaluateAllStudents() {
+      state.students.forEach(student => {
+        const scoreInfo = calculateStudentScore(student.answers, student.set);
+        student.correct = scoreInfo.correct;
+        student.wrong = scoreInfo.wrong;
+        student.blank = scoreInfo.blank;
+        student.percentage = ((scoreInfo.correct / 30) * 100).toFixed(1);
+        student.status = student.correct >= 10 ? 'উত্তীর্ণ' : 'অনুত্তীর্ণ';
+      });
+    }
+
+    // 4. Render Table with Search and Filters
+    function renderResultsTable() {
+      const searchQuery = inputSearch.value.trim().toLowerCase();
+      const selectedClass = filterClass.value;
+      const selectedSection = filterSection.value;
+      const selectedSet = filterSet.value;
+      const selectedStatus = filterStatus.value;
+
+      const filtered = state.students.filter(s => {
+        const matchesSearch = !searchQuery || 
+          s.id.toLowerCase().includes(searchQuery) || 
+          s.roll.toLowerCase().includes(searchQuery) ||
+          toBengaliNumber(s.roll).includes(searchQuery) ||
+          toBengaliNumber(s.id).includes(searchQuery);
+
+        const matchesClass = selectedClass === 'ALL' || s.class === selectedClass;
+        const matchesSection = selectedSection === 'ALL' || s.section === selectedSection;
+        const matchesSet = selectedSet === 'ALL' || s.set === selectedSet;
+        const matchesStatus = selectedStatus === 'ALL' || s.status === selectedStatus;
+
+        return matchesSearch && matchesClass && matchesSection && matchesSet && matchesStatus;
+      });
+
+      textShowingCount.textContent = toBengaliNumber(filtered.length);
+
+      if (filtered.length === 0) {
+        tableResultsBody.innerHTML = `
+          <tr>
+            <td colspan="10">
+              <div class="empty-state">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <h3>কোনো ফলাফল পাওয়া যায়নি</h3>
+                <p>অন্য কোনো আইডি বা ফিল্টার প্রয়োগ করে পুনরায় চেষ্টা করুন।</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tableResultsBody.innerHTML = filtered.map((student, idx) => {
+        const originalIndex = state.students.indexOf(student);
+        const statusBadgeClass = student.status === 'উত্তীর্ণ' ? 'status-pass' : 'status-fail';
+        const statusIcon = student.status === 'উত্তীর্ণ' ? 'fa-check' : 'fa-xmark';
+
+        return `
+          <tr>
+            <td style="font-family: 'Inter', monospace; color: var(--text-muted); font-size: 0.85rem;">
+              ${toBengaliNumber(idx + 1)}
+            </td>
+            <td>
+              <span class="student-badge-id">${toBengaliNumber(student.id)}</span>
+            </td>
+            <td class="roll-cell">
+              ${toBengaliNumber(student.roll)}
+            </td>
+            <td>
+              <strong>${toBengaliNumber(student.class)}ম</strong> শ্রেণি
+            </td>
+            <td>
+              <span style="font-weight: 600; color: var(--text-main);">${student.section}</span>
+            </td>
+            <td>
+              <span class="set-tag">${student.set}</span>
+            </td>
+            <td>
+              <div class="score-badge">
+                <span style="color: ${student.correct >= 15 ? '#10b981' : '#ef4444'}; font-size: 1.1rem;">
+                  ${toBengaliNumber(student.correct)}
+                </span>
+                <span class="score-total">/ ৩০</span>
+              </div>
+            </td>
+            <td>
+              <strong>${toBengaliNumber(student.percentage)}%</strong>
+            </td>
+            <td>
+              <span class="status-badge ${statusBadgeClass}">
+                <i class="fa-solid ${statusIcon}"></i> ${student.status}
+              </span>
+            </td>
+            <td style="text-align: right;">
+              <div class="action-btn-group" style="justify-content: flex-end;">
+                <button class="btn btn-sm btn-outline" onclick="openViewEditModal(${originalIndex})" title="ওএমআর শিট দেখুন ও সংশোধন করুন">
+                  <i class="fa-solid fa-pen-to-square" style="color: var(--primary);"></i> দেখুন ও সংশোধন
+                </button>
+                <button class="icon-btn" style="width: 32px; height: 32px;" onclick="deleteStudent(${originalIndex})" title="মুছে ফেলুন">
+                  <i class="fa-solid fa-trash-can" style="color: var(--danger); font-size: 0.85rem;"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Attach search and filter listeners
+    [inputSearch, filterClass, filterSection, filterSet, filterStatus].forEach(el => {
+      el.addEventListener('input', renderResultsTable);
+      el.addEventListener('change', renderResultsTable);
+    });
+
+    // 5. Update Statistics Summary Cards
+    function updateStatistics() {
+      const total = state.students.length;
+      if (total === 0) {
+        document.getElementById('statTotalStudents').textContent = '০';
+        document.getElementById('statPassedStudents').textContent = '০';
+        document.getElementById('statAverageScore').textContent = '০.০';
+        document.getElementById('statHighestScore').textContent = '০';
+        document.getElementById('statPassRate').textContent = '০%';
+        return;
+      }
+
+      const passed = state.students.filter(s => s.status === 'উত্তীর্ণ').length;
+      const totalCorrect = state.students.reduce((acc, cur) => acc + cur.correct, 0);
+      const avgCorrect = (totalCorrect / total).toFixed(1);
+      const highestScore = Math.max(...state.students.map(s => s.correct));
+      const passRate = ((passed / total) * 100).toFixed(1);
+
+      document.getElementById('statTotalStudents').textContent = toBengaliNumber(total);
+      document.getElementById('statPassedStudents').textContent = toBengaliNumber(passed);
+      document.getElementById('statAverageScore').textContent = toBengaliNumber(avgCorrect);
+      document.getElementById('statHighestScore').textContent = toBengaliNumber(highestScore);
+      document.getElementById('statPassRate').textContent = `${toBengaliNumber(passRate)}%`;
+    }
+
+    // Delete a student from the table
+    window.deleteStudent = function(index) {
+      if (confirm('আপনি কি নিশ্চিতভাবে এই শিক্ষার্থীর ওএমআর তথ্য মুছে ফেলতে চান?')) {
+        state.students.splice(index, 1);
+        renderResultsTable();
+        updateStatistics();
+        showToast('শিক্ষার্থীর তথ্য সফলভাবে মুছে ফেলা হয়েছে', 'info');
+      }
+    };
+
+    // 6. View & Edit Modal Functionality
+    window.openViewEditModal = function(index) {
+      state.currentEditIndex = index;
+      const student = state.students[index];
+      // Clone student for editing
+      state.tempEditStudent = JSON.parse(JSON.stringify(student));
+
+      editStudentId.value = student.id;
+      editRoll.value = student.roll;
+      editClass.value = student.class;
+      editSection.value = student.section;
+      editSet.value = student.set;
+
+      updateModalScorePreview();
+      renderModalOmrBubbles();
+
+      modalViewEdit.style.display = 'flex';
+    };
+
+    function updateModalScorePreview() {
+      if (!state.tempEditStudent) return;
+      const score = calculateStudentScore(state.tempEditStudent.answers, state.tempEditStudent.set);
+      editCurrentScoreDisplay.innerHTML = `
+        <span style="color: #10b981;">${toBengaliNumber(score.correct)}</span> 
+        <span style="color: var(--text-muted); font-size: 0.95rem;">/ ৩০ (ভুল: ${toBengaliNumber(score.wrong)}, ফাঁকা: ${toBengaliNumber(score.blank)})</span>
+      `;
+    }
+
+    function renderModalOmrBubbles() {
+      if (!state.tempEditStudent) return;
+      const targetKey = state.answerKeys[state.tempEditStudent.set] || defaultAnswerKeys['ক'];
+
+      let colsHtml = ['', '', ''];
+
+      for (let q = 1; q <= 30; q++) {
+        const colIdx = q <= 10 ? 0 : (q <= 20 ? 1 : 2);
+        const studentAns = state.tempEditStudent.answers[q];
+        const correctAns = targetKey[q - 1];
+
+        let bubblesHtml = optionsBengali.map(opt => {
+          let extraClass = '';
+          if (studentAns === opt) {
+            extraClass = (opt === correctAns) ? 'filled-correct' : 'filled-wrong';
+          } else if (opt === correctAns) {
+            extraClass = 'filled-key-answer';
+          }
+
+          return `
+            <span class="interactive-bubble ${extraClass}" 
+                  onclick="toggleStudentAnswer(${q}, '${opt}')" 
+                  title="প্রশ্ন ${toBengaliNumber(q)}: অপশন ${opt}">
+              ${opt}
+            </span>
+          `;
+        }).join('');
+
+        colsHtml[colIdx] += `
+          <div class="omr-q-row">
+            <span class="q-number-label">${toBengaliNumber(q)}.</span>
+            <div class="bubbles-interactive-group">
+              ${bubblesHtml}
+            </div>
+          </div>
+        `;
+      }
+
+      modalOmrGrid.innerHTML = colsHtml.map((colContent, idx) => `
+        <div class="omr-column">
+          <div style="font-size: 0.8rem; font-weight: 700; color: var(--omr-pink); text-align: center; margin-bottom: 6px; border-bottom: 1px dashed #fbcfe8; padding-bottom: 3px;">
+            প্রশ্ন ${toBengaliNumber(idx * 10 + 1)} হতে ${toBengaliNumber((idx + 1) * 10)}
+          </div>
+          ${colContent}
+        </div>
+      `).join('');
+    }
+
+    window.toggleStudentAnswer = function(questionNumber, selectedOption) {
+      if (!state.tempEditStudent) return;
+      const current = state.tempEditStudent.answers[questionNumber];
+      if (current === selectedOption) {
+        // Clear answer if clicked again
+        state.tempEditStudent.answers[questionNumber] = null;
+      } else {
+        state.tempEditStudent.answers[questionNumber] = selectedOption;
+      }
+      updateModalScorePreview();
+      renderModalOmrBubbles();
+    };
+
+    // React to Set change inside modal
+    editSet.addEventListener('change', () => {
+      if (!state.tempEditStudent) return;
+      state.tempEditStudent.set = editSet.value;
+      updateModalScorePreview();
+      renderModalOmrBubbles();
+    });
+
+    // Save Edit Modal
+    btnSaveEdit.addEventListener('click', () => {
+      if (state.currentEditIndex < 0 || !state.tempEditStudent) return;
+
+      const updated = state.tempEditStudent;
+      updated.id = editStudentId.value.trim() || updated.id;
+      updated.roll = editRoll.value.trim() || updated.roll;
+      updated.class = editClass.value;
+      updated.section = editSection.value;
+      updated.set = editSet.value;
+
+      const scoreInfo = calculateStudentScore(updated.answers, updated.set);
+      updated.correct = scoreInfo.correct;
+      updated.wrong = scoreInfo.wrong;
+      updated.blank = scoreInfo.blank;
+      updated.percentage = ((scoreInfo.correct / 30) * 100).toFixed(1);
+      updated.status = updated.correct >= 10 ? 'উত্তীর্ণ' : 'অনুত্তীর্ণ';
+
+      state.students[state.currentEditIndex] = updated;
+
+      modalViewEdit.style.display = 'none';
+      renderResultsTable();
+      updateStatistics();
+      showToast(`রোল নং ${toBengaliNumber(updated.roll)}-এর তথ্য সফলভাবে সংশোধন করা হয়েছে!`, 'success', 'fa-check');
+    });
+
+    [btnCloseModal, btnCancelEdit].forEach(el => {
+      el.addEventListener('click', () => { modalViewEdit.style.display = 'none'; });
+    });
+
+    // 7. Answer Key Setup Modal
+    btnOpenKeyModal.addEventListener('click', () => {
+      selectAnswerKeySet(state.currentEditingKeySet || 'ক');
+      modalAnswerKey.style.display = 'flex';
+      if (window.switchKeyModalTab) {
+        window.switchKeyModalTab(state.uploadedKeyPreview ? 'source' : 'bubble');
+      }
+    });
+
+    btnCloseKeyModal.addEventListener('click', () => {
+      modalAnswerKey.style.display = 'none';
+    });
+
+    window.selectAnswerKeySet = function(setName) {
+      state.currentEditingKeySet = setName;
+      document.querySelectorAll('.active-set-btn').forEach(btn => {
+        if (btn.textContent.includes(setName)) {
+          btn.className = 'btn btn-sm btn-primary active-set-btn';
+        } else {
+          btn.className = 'btn btn-sm btn-outline active-set-btn';
+        }
+      });
+      renderAnswerKeyBubbles();
+    };
+
+    function renderAnswerKeyBubbles() {
+      const keys = state.answerKeys[state.currentEditingKeySet] || defaultAnswerKeys[state.currentEditingKeySet];
+      let colsHtml = ['', '', ''];
+
+      for (let q = 1; q <= 30; q++) {
+        const colIdx = q <= 10 ? 0 : (q <= 20 ? 1 : 2);
+        const correctAns = keys[q - 1];
+
+        let bubblesHtml = optionsBengali.map(opt => {
+          const isSelected = opt === correctAns;
+          return `
+            <span class="interactive-bubble ${isSelected ? 'selected-user' : ''}" 
+                  onclick="setAnswerKeyOption(${q}, '${opt}')" 
+                  title="প্রশ্ন ${toBengaliNumber(q)} এর সঠিক উত্তর ${opt}">
+              ${opt}
+            </span>
+          `;
+        }).join('');
+
+        colsHtml[colIdx] += `
+          <div class="omr-q-row">
+            <span class="q-number-label">${toBengaliNumber(q)}.</span>
+            <div class="bubbles-interactive-group">
+              ${bubblesHtml}
+            </div>
+          </div>
+        `;
+      }
+
+      answerKeyQuestionsGrid.innerHTML = colsHtml.map((colContent, idx) => `
+        <div class="omr-column">
+          <div style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-align: center; margin-bottom: 6px; border-bottom: 1px dashed var(--border-color); padding-bottom: 3px;">
+            প্রশ্ন ${toBengaliNumber(idx * 10 + 1)} - ${toBengaliNumber((idx + 1) * 10)}
+          </div>
+          ${colContent}
+        </div>
+      `).join('');
+    }
+
+    window.setAnswerKeyOption = function(qNum, option) {
+      state.answerKeys[state.currentEditingKeySet][qNum - 1] = option;
+      renderAnswerKeyBubbles();
+    };
+
+    window.randomizeAnswerKeys = function() {
+      for (let q = 0; q < 30; q++) {
+        state.answerKeys[state.currentEditingKeySet][q] = optionsBengali[Math.floor(Math.random() * optionsBengali.length)];
+      }
+      renderAnswerKeyBubbles();
+      showToast(`সেট ${state.currentEditingKeySet}-এর উত্তরপত্র সফলভাবে র‍্যান্ডমাইজ করা হয়েছে`, 'info');
+    };
+
+    window.clearAnswerKeys = function() {
+      state.answerKeys = JSON.parse(JSON.stringify(defaultAnswerKeys));
+      state.uploadedKeyPreview = null;
+      textAnswerKeyStatus.innerHTML = 'কোনো উত্তরপত্র আপলোড করা হয়নি';
+      renderAnswerKeyBubbles();
+      updateKeySourcePreviewUI();
+      if (state.students.length > 0) {
+        reEvaluateAllStudents();
+        renderResultsTable();
+        updateStatistics();
+      }
+      showToast('উত্তরপত্র মুছে ফেলা হয়েছে। এখন কোনো সঠিক উত্তর সেট করা নেই।', 'info');
+    };
+    
+    window.switchKeyModalTab = function(tabName) {
+      state.activeKeyModalTab = tabName;
+      document.querySelectorAll('.key-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      const tabBubble = document.getElementById('keyTabBubbleContent');
+      const tabSource = document.getElementById('keyTabSourceContent');
+      const tabTemplate = document.getElementById('keyTabTemplateContent');
+      
+      if (tabBubble) tabBubble.style.display = 'none';
+      if (tabSource) tabSource.style.display = 'none';
+      if (tabTemplate) tabTemplate.style.display = 'none';
+      
+      if (tabName === 'bubble') {
+        document.getElementById('tabBtnBubbleView').classList.add('active');
+        if (tabBubble) tabBubble.style.display = 'block';
+      } else if (tabName === 'source') {
+        document.getElementById('tabBtnSourceView').classList.add('active');
+        if (tabSource) tabSource.style.display = 'block';
+      } else if (tabName === 'template') {
+        document.getElementById('tabBtnTemplateView').classList.add('active');
+        if (tabTemplate) tabTemplate.style.display = 'block';
+      }
+    };
+    
+    window.updateKeySourcePreviewUI = function() {
+      const preview = state.uploadedKeyPreview;
+      if (!preview) {
+        if (typeof keySourcePreviewContainer !== 'undefined' && keySourcePreviewContainer) {
+          keySourcePreviewContainer.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+              <i class="fa-solid fa-folder-open" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5;"></i><br>
+              এখনও কোনো উত্তরপত্র আপলোড করা হয়নি।<br>
+              দয়া করে একটি উত্তরপত্র আপলোড করুন।
+            </div>
+          `;
+        }
+        return;
+      }
+      
+      let innerHtml = `
+        <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-file-circle-check" style="font-size: 1.5rem; color: var(--success);"></i>
+            <div>
+              <div style="font-weight: 600; font-size: 1.05rem;">${escapeHtml(preview.fileName)}</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">ফাইল টাইপ: ${preview.type.toUpperCase()}</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      if (preview.type === 'excel' && preview.tableData) {
+        let tableRowsHtml = '';
+        preview.tableData.forEach((row, rIdx) => {
+          let cellsHtml = row.map(cell => `<td>${escapeHtml(cell !== undefined ? cell : '')}</td>`).join('');
+          if (rIdx === 0) {
+            tableRowsHtml += `<tr style="background: var(--bg-card); font-weight: 600;">${row.map(cell => `<th>${escapeHtml(cell !== undefined ? cell : '')}</th>`).join('')}</tr>`;
+          } else {
+            tableRowsHtml += `<tr>${cellsHtml}</tr>`;
+          }
+        });
+        
+        innerHtml += `
+          <div style="overflow-x: auto; max-height: 38vh; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+            <table class="key-preview-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+              ${tableRowsHtml}
+            </table>
+          </div>
+        `;
+      } else if (preview.type === 'image' && preview.imagePreviewUrl) {
+        innerHtml += `
+          <div style="text-align: center; max-height: 40vh; overflow: auto; background: #000; padding: 10px; border-radius: var(--radius-sm);">
+            <img src="${preview.imagePreviewUrl}" alt="Answer Key Preview" style="max-width: 100%; max-height: 360px; object-fit: contain; border-radius: 4px;">
+          </div>
+        `;
+      } else if (preview.rawText) {
+        innerHtml += `
+          <div class="key-source-text-view" style="max-height: 38vh; overflow-y: auto; padding: 1rem; background: #1e293b; color: #f8fafc; border-radius: 6px; font-family: monospace; white-space: pre-wrap;">${escapeHtml(preview.rawText)}</div>
+        `;
+      } else {
+        innerHtml += `
+          <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+            ফাইলটি সফলভাবে প্রক্রিয়া করা হয়েছে এবং উত্তরমালা বাবল গ্রিডে লোড করা হয়েছে।
+          </div>
+        `;
+      }
+
+      if (typeof keySourcePreviewContainer !== 'undefined' && keySourcePreviewContainer) {
+        keySourcePreviewContainer.innerHTML = innerHtml;
+      }
+    };
+    
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    btnSaveAnswerKeys.addEventListener('click', () => {
+      modalAnswerKey.style.display = 'none';
+      if (state.students.length > 0) {
+        reEvaluateAllStudents();
+        renderResultsTable();
+        updateStatistics();
+        showToast('নতুন উত্তরপত্রের ভিত্তিতে সকল শিক্ষার্থীর নম্বর পুনরায় মূল্যায়ন করা হয়েছে!', 'success', 'fa-rotate');
+      } else {
+        showToast('উত্তরপত্র সংরক্ষিত হয়েছে!', 'success');
+      }
+    });
+
+    // 8. Excel Export Functionality (.xlsx)
+    btnExportExcel.addEventListener('click', () => {
+      if (state.students.length === 0) {
+        showToast('এক্সপোর্ট করার মতো কোনো ফলাফল পাওয়া যায়নি', 'warning');
+        return;
+      }
+
+      try {
+        // Prepare formatted data for SheetJS
+        const excelRows = state.students.map((s, idx) => ({
+          'ক্রমিক নং': idx + 1,
+          'শিক্ষার্থী আইডি নং': s.id,
+          'রোল নং': s.roll,
+          'শ্রেণি': s.class,
+          'শাখা': s.section,
+          'সেট নং': s.set,
+          'শুদ্ধ উত্তর': s.correct,
+          'ভুল উত্তর': s.wrong,
+          'ফাঁকা উত্তর': s.blank,
+          'মোট নম্বর': s.correct,
+          'শতকরা (%)': s.percentage + '%',
+          'ফলাফল স্ট্যাটাস': s.status
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(excelRows);
+        
+        // Auto-size columns width
+        worksheet['!cols'] = [
+          { wch: 10 },
+          { wch: 18 },
+          { wch: 12 },
+          { wch: 10 },
+          { wch: 10 },
+          { wch: 10 },
+          { wch: 12 },
+          { wch: 12 },
+          { wch: 12 },
+          { wch: 12 },
+          { wch: 14 },
+          { wch: 16 }
+        ];
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'OMR_Evaluation_Result');
+
+        const dateStr = new Date().toISOString().slice(0, 10);
+        XLSX.writeFile(workbook, `OMR_Evaluation_Report_${dateStr}.xlsx`);
+        showToast('এক্সেল (.xlsx) ফাইল সফলভাবে ডাউনলোড হয়েছে!', 'success', 'fa-file-excel');
+      } catch (err) {
+        console.error(err);
+        showToast('এক্সেল এক্সপোর্টে সমস্যা হয়েছে: ' + err.message, 'danger');
+      }
+    });
+
+    // 9. Print Table Action
+    btnPrintTable.addEventListener('click', () => {
+      window.print();
+    });
+
+    // 10. Blank OMR Download / Print Integration
+    btnDownloadBlankOMR.addEventListener('click', () => {
+      // Check if 2O2mr.html exists in the same workspace folder
+      // Open in a new tab or trigger direct download
+      const userChoice = confirm(
+        "ব্লাংক OMR শিট প্রিন্ট ও ডাউনলোড:\n\n'OK' চাপলে হাই-কোয়ালিটি OMR শিটের প্রিন্ট প্রিভিউ ওপেন হবে।\n'Cancel' চাপলে ফাইলটি সরাসরি ডাউনলোড হবে।"
+      );
+
+      if (userChoice) {
+        // Open 2O2mr.html in new tab for clean high-res print
+        window.open('2O2mr.html', '_blank');
+      } else {
+        // Create an anchor download tag
+        const link = document.createElement('a');
+        link.href = '2O2mr.html';
+        link.download = 'Alhera_Blank_OMR_Sheet.html';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('ব্লাংক OMR শিট ডাউনলোড শুরু হয়েছে', 'info', 'fa-download');
+      }
+    });
+
+    // Reset All Data
+    btnResetData.addEventListener('click', () => {
+      if (confirm('আপনি কি বর্তমান সকল ফলাফল ও আপলোডকৃত ডেটা রিসেট করতে চান?')) {
+        state.students = [];
+        state.studentFiles = [];
+        state.answerKeyFiles = [];
+        
+        dropzoneAnswerKey.classList.remove('filled');
+        dropzoneStudentOMR.classList.remove('filled');
+        textAnswerKeyStatus.innerHTML = 'কোনো উত্তরপত্র আপলোড করা হয়নি';
+        textStudentOMRStatus.innerHTML = '০ টি ফাইল নির্বাচিত';
+        
+        renderResultsTable();
+        updateStatistics();
+        btnExportExcel.disabled = true;
+        btnPrintTable.disabled = true;
+        showToast('ডেটা সফলভাবে রিসেট করা হয়েছে', 'info');
+      }
+    });
+  </script>
+</body>
+</html>

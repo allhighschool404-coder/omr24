@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ওএমআর শিট - আলহেরা এডুকেয়ার হোম হাই স্কুল</title>
+<link href="https://fonts.maateen.me/kalpurush/font.css" rel="stylesheet">
+<style>
+  :root {
+    --omr-pink: #d91c84;
+    --omr-pink-light: #ffdbee;
+    --omr-pink-border: #d91c84;
+    --black: #000000;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Kalpurush', 'Arial', 'Helvetica', 'Times New Roman', sans-serif;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    background-color: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0;
+    gap: 20px;
+  }
+
+  .page-wrapper {
+    width: 297mm;
+    height: 210mm;
+    display: flex;
+    flex-direction: row;
+    background: #ffffff;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    position: relative;
+  }
+
+  .sheet-container {
+    width: 148.5mm;
+    height: 210mm;
+    background: #ffffff;
+    padding: 6mm 4mm;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    overflow: hidden;
+  }
+
+  .cut-line {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    border-left: 1.5px dashed #ccc;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* Timing Track / Black Bars */
+  .timing-track {
+    width: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .timing-block-large {
+    width: 20px;
+    height: 24px;
+    background-color: var(--black);
+  }
+
+  .timing-marks {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    height: calc(100% - 60px);
+    width: 100%;
+    margin: 4px 0;
+  }
+
+  .timing-bar {
+    width: 15px;
+    height: 4px;
+    background-color: var(--black);
+  }
+
+  /* Main Form Area */
+  .main-content {
+    flex: 1;
+    padding: 0 8px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* School Header */
+  .header {
+    text-align: center;
+    margin-bottom: 6px;
+  }
+
+  .header h1 {
+    font-family: 'Kalpurush', 'Times New Roman', serif;
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--omr-pink);
+    letter-spacing: 0.8px;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+  }
+
+  .header p {
+    font-family: 'Kalpurush', 'Times New Roman', serif;
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--omr-pink);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  .mcq-boxed-container {
+    border: 1.5px solid var(--omr-pink-border);
+    margin-bottom: 5px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mcq-header-bar {
+    background-color: var(--omr-pink-light);
+    color: var(--omr-pink);
+    font-size: 14.5px;
+    font-weight: bold;
+    text-align: center;
+    padding: 3.5px 0;
+    border-bottom: 1.5px solid var(--omr-pink-border);
+    letter-spacing: 1.5px;
+  }
+
+  .mcq-section {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 5px;
+  }
+
+  .mcq-col {
+    flex: 1;
+    border: 1.5px solid var(--omr-pink-border);
+  }
+
+  .mcq-col-header {
+    background-color: var(--omr-pink-light);
+    color: var(--omr-pink);
+    font-size: 11.5px;
+    font-weight: bold;
+    text-align: center;
+    padding: 2px 0;
+    border-bottom: 1.5px solid var(--omr-pink-border);
+    letter-spacing: 0.3px;
+  }
+
+  .mcq-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .mcq-table td {
+    padding: 1.2px 1px;
+    text-align: center;
+  }
+
+  .mcq-row-bg {
+    background-color: var(--omr-pink-light);
+  }
+
+  .mcq-table tr:nth-child(even) .mcq-row-bg {
+    background-color: #ffffff;
+  }
+
+  .bubble-container {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    width: 100%;
+  }
+
+  .q-num {
+    font-weight: bold;
+    font-size: 13px;
+    color: var(--black);
+    width: 18px;
+    text-align: center;
+  }
+
+  .bubble {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16.5px;
+    height: 16.5px;
+    border: 1px solid var(--omr-pink);
+    border-radius: 50%;
+    color: var(--omr-pink);
+    font-size: 11px;
+    font-weight: bold;
+    background: #fff;
+    line-height: 1;
+    padding-top: 1.5px;
+    padding-left: 0.5px;
+  }
+
+  /* Exam Info Fields */
+  .info-fields {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--omr-pink);
+    margin-bottom: 4px;
+  }
+
+  .info-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2px;
+  }
+
+  .info-row span.label {
+    white-space: nowrap;
+  }
+
+  .info-row span.label-black {
+    color: var(--black);
+  }
+
+  .underline-input {
+    flex: 1;
+    border-bottom: 1.5px solid var(--omr-pink);
+    margin: 0 6px 0 3px;
+    height: 16px;
+  }
+
+  .underline-input-black {
+    flex: 1;
+    border-bottom: 1.5px solid var(--black);
+    margin: 0 6px 0 3px;
+    height: 16px;
+  }
+
+  .student-name-box {
+    border: 1.5px solid var(--omr-pink);
+    background-color: #ffffff;
+    padding: 3px 6px;
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--black);
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Identification & Grids Section */
+  .grids-section {
+    display: flex;
+    justify-content: space-between;
+    gap: 5px;
+    margin-bottom: 4px;
+  }
+
+  .grid-box {
+    border: 1.5px solid var(--omr-pink-border);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .grid-header {
+    background-color: var(--omr-pink-light);
+    color: var(--omr-pink);
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    padding: 2px 1px;
+    border-bottom: 1.5px solid var(--omr-pink-border);
+    white-space: nowrap;
+  }
+
+  .grid-body {
+    padding: 2px 3px;
+    display: flex;
+    gap: 2px;
+    justify-content: center;
+  }
+
+  .digit-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2px;
+    background-color: var(--omr-pink-light);
+    padding: 2px 1px;
+  }
+
+  .box-input {
+    width: 16.5px;
+    height: 17.5px;
+    border: 1px solid var(--omr-pink);
+    background-color: #fff;
+    margin-bottom: 2px;
+  }
+
+  /* Section & Set Box */
+  .section-set-box {
+    display: flex;
+    flex-direction: column;
+    width: 58px;
+  }
+
+  .white-rect-box {
+    width: 100%;
+    height: 18px;
+    border: 1px solid var(--omr-pink);
+    background: #fff;
+    margin-bottom: 3px;
+  }
+
+  .choice-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 1px 0;
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--black);
+    background: var(--omr-pink-light);
+  }
+
+  /* Teacher Section */
+  .teacher-wrapper {
+    display: flex;
+    border: 1.5px solid var(--omr-pink);
+  }
+
+  .vertical-label {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    text-align: center;
+    background-color: var(--omr-pink-light);
+    color: var(--black);
+    font-size: 12.65px;
+    font-weight: bold;
+    padding: 3px 2px;
+    border-left: 1.5px solid var(--omr-pink);
+    letter-spacing: 0.8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Bottom Row Boxes */
+  .bottom-section {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .instruction-box {
+    flex: 1.6;
+    border: 1.5px solid var(--omr-pink);
+    padding: 3px 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+  }
+
+  .instruction-title {
+    color: var(--black);
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 2px;
+    letter-spacing: 0.5px;
+  }
+
+  .sample-row {
+    display: flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: bold;
+    color: var(--black);
+    gap: 6px;
+  }
+
+  .sample-bubbles {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+  }
+
+  .bubble-filled {
+    background-color: var(--black);
+    border-color: var(--black);
+  }
+
+  .signature-box {
+    flex: 1;
+    border: 1.5px solid var(--omr-pink);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .signature-header {
+    background-color: var(--omr-pink-light);
+    color: var(--black);
+    font-size: 11px;
+    font-weight: bold;
+    text-align: center;
+    padding: 2px 0;
+    border-bottom: 1.5px solid var(--omr-pink);
+    line-height: 1.1;
+  }
+
+  .signature-space {
+    flex: 1;
+    min-height: 28px;
+  }
+
+  @page {
+    size: A4 landscape;
+    margin: 0;
+  }
+
+  @media print {
+    body {
+      background: none;
+      padding: 0;
+      margin: 0;
+    }
+    .page-wrapper {
+      box-shadow: none;
+      width: 297mm;
+      height: 210mm;
+    }
+    .sheet-container {
+      width: 148.5mm;
+      height: 210mm;
+    }
+    .cut-line {
+      border-left: 1.5px dashed #999;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-wrapper">
+  <div class="sheet-container">
+  
+  <!-- Left Timing Track -->
+  <div class="timing-track">
+    <div class="timing-block-large"></div>
+    <div class="timing-marks">
+      <!-- 34 Timing dashes -->
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div>
+    </div>
+    <div class="timing-block-large"></div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    
+    <!-- Helper Script for Bengali Numbers -->
+    <script>
+      window.toBengaliNumber = num => String(num).replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
+      window.bengaliDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+    </script>
+
+    <!-- School Header -->
+    <div class="header">
+      <h1>আলহেরা এডুকেয়ার হোম হাই স্কুল</h1>
+      <p>জলঢাকা, নীলফামারী</p>
+    </div>
+
+    <!-- Container enclosing 'উত্তরপত্র' and MCQ options -->
+    <div class="mcq-boxed-container">
+      <div class="mcq-header-bar">উত্তরপত্র</div>
+      <div class="mcq-section">
+        
+        <!-- Col 1: Q1 - Q10 -->
+        <div class="mcq-col">
+          <div class="mcq-col-header">এমসিকিউ উত্তর এখানে পূরণ করুন</div>
+          <table class="mcq-table">
+            <script>
+              for(let i=1; i<=10; i++) {
+                document.write(`
+                  <tr>
+                    <td class="q-num">${toBengaliNumber(i)}</td>
+                    <td class="mcq-row-bg">
+                      <div class="bubble-container">
+                        <span class="bubble">ক</span>
+                        <span class="bubble">খ</span>
+                        <span class="bubble">গ</span>
+                        <span class="bubble">ঘ</span>
+                      </div>
+                    </td>
+                  </tr>
+                `);
+              }
+            </script>
+          </table>
+        </div>
+
+        <!-- Col 2: Q11 - Q20 -->
+        <div class="mcq-col">
+          <div class="mcq-col-header">এমসিকিউ উত্তর এখানে পূরণ করুন</div>
+          <table class="mcq-table">
+            <script>
+              for(let i=11; i<=20; i++) {
+                document.write(`
+                  <tr>
+                    <td class="q-num">${toBengaliNumber(i)}</td>
+                    <td class="mcq-row-bg">
+                      <div class="bubble-container">
+                        <span class="bubble">ক</span>
+                        <span class="bubble">খ</span>
+                        <span class="bubble">গ</span>
+                        <span class="bubble">ঘ</span>
+                      </div>
+                    </td>
+                  </tr>
+                `);
+              }
+            </script>
+          </table>
+        </div>
+
+        <!-- Col 3: Q21 - Q30 -->
+        <div class="mcq-col">
+          <div class="mcq-col-header">এমসিকিউ উত্তর এখানে পূরণ করুন</div>
+          <table class="mcq-table">
+            <script>
+              for(let i=21; i<=30; i++) {
+                document.write(`
+                  <tr>
+                    <td class="q-num">${toBengaliNumber(i)}</td>
+                    <td class="mcq-row-bg">
+                      <div class="bubble-container">
+                        <span class="bubble">ক</span>
+                        <span class="bubble">খ</span>
+                        <span class="bubble">গ</span>
+                        <span class="bubble">ঘ</span>
+                      </div>
+                    </td>
+                  </tr>
+                `);
+              }
+            </script>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Exam Info Fields -->
+    <div class="info-fields">
+      <div class="info-row">
+        <span class="label">পরীক্ষার নাম:</span>
+        <div class="underline-input" style="flex: 2;"></div>
+        <span class="label">তারিখ:</span>
+        <div class="underline-input" style="flex: 0.5;"></div> / 
+        <div class="underline-input" style="flex: 0.5;"></div> / 
+        <div class="underline-input" style="flex: 0.8;"></div>
+      </div>
+      <div class="info-row">
+        <span class="label label-black">বিষয়:</span>
+        <div class="underline-input-black" style="flex: 2;"></div>
+        <span class="label">পরীক্ষা নং:</span>
+        <div class="underline-input" style="flex: 1;"></div>
+      </div>
+    </div>
+
+    <div class="student-name-box">
+      শিক্ষার্থীর নাম:
+    </div>
+
+    <!-- Grid Columns: Student ID, Roll, Class, Section/Set, CQ Marks -->
+    <div class="grids-section">
+      
+      <!-- Student ID No (7 digits) -->
+      <div class="grid-box">
+        <div class="grid-header">শিক্ষার্থী আইডি নং</div>
+        <div class="grid-body">
+          <script>
+            for(let c=0; c<7; c++) {
+              let bubbles = '';
+              for(let d=0; d<=9; d++) {
+                bubbles += `<span class="bubble">${bengaliDigits[d]}</span>`;
+              }
+              document.write(`<div class="digit-col"><div class="box-input"></div>${bubbles}</div>`);
+            }
+          </script>
+        </div>
+      </div>
+
+      <!-- Roll No (3 digits) -->
+      <div class="grid-box">
+        <div class="grid-header">রোল নং</div>
+        <div class="grid-body">
+          <script>
+            for(let c=0; c<3; c++) {
+              let bubbles = '';
+              for(let d=0; d<=9; d++) {
+                bubbles += `<span class="bubble">${bengaliDigits[d]}</span>`;
+              }
+              document.write(`<div class="digit-col"><div class="box-input"></div>${bubbles}</div>`);
+            }
+          </script>
+        </div>
+      </div>
+
+      <!-- Class (2 digits) -->
+      <div class="grid-box">
+        <div class="grid-header">শ্রেণি</div>
+        <div class="grid-body">
+          <script>
+            for(let c=0; c<2; c++) {
+              let bubbles = '';
+              for(let d=0; d<=9; d++) {
+                bubbles += `<span class="bubble">${bengaliDigits[d]}</span>`;
+              }
+              document.write(`<div class="digit-col"><div class="box-input"></div>${bubbles}</div>`);
+            }
+          </script>
+        </div>
+      </div>
+
+      <!-- Section & Set No -->
+      <div class="grid-box section-set-box">
+        <div class="grid-header">শাখা</div>
+        <div style="padding: 3px 4px;">
+          <div class="white-rect-box"></div>
+          <div class="choice-row">ক <span class="bubble"></span></div>
+          <div class="choice-row">খ <span class="bubble"></span></div>
+          <div class="choice-row">গ <span class="bubble"></span></div>
+          <div class="choice-row">ঘ <span class="bubble"></span></div>
+        </div>
+        <div class="grid-header" style="border-top: 1.5px solid var(--omr-pink);">সেট নং</div>
+        <div style="padding: 3px 4px;">
+          <div class="choice-row">ক <span class="bubble"></span></div>
+          <div class="choice-row">খ <span class="bubble"></span></div>
+          <div class="choice-row">গ <span class="bubble"></span></div>
+        </div>
+      </div>
+
+      <!-- Teacher CQ Mark -->
+      <div class="teacher-wrapper">
+        <div class="vertical-label">শুধু শিক্ষকের জন্য</div>
+        <div class="grid-box" style="border: none;">
+          <div class="grid-header">সৃজনশীল নম্বর</div>
+          <div class="grid-body">
+            <script>
+              for(let c=0; c<2; c++) {
+                let bubbles = '';
+                for(let d=0; d<=9; d++) {
+                  bubbles += `<span class="bubble">${bengaliDigits[d]}</span>`;
+                }
+                document.write(`<div class="digit-col"><div class="box-input"></div>${bubbles}</div>`);
+              }
+            </script>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Instructions & Signatures -->
+    <div class="bottom-section">
+      
+      <div class="instruction-box">
+        <div class="instruction-title">ওএমআর পূরণের নির্দেশনাবলী</div>
+        <div class="sample-row">
+          <span>সঠিক পদ্ধতি</span>
+          <div class="sample-bubbles">
+            <span class="bubble"></span>
+            <span class="bubble"></span>
+            <span class="bubble bubble-filled"></span>
+            <span class="bubble"></span>
+          </div>
+        </div>
+        <div class="sample-row">
+          <span>ভুল পদ্ধতি</span>
+          <div class="sample-bubbles" style="font-size: 12px; color: var(--omr-pink);">
+            <span class="bubble">✕</span>
+            <span class="bubble"></span>
+            <span class="bubble">✓</span>
+            <span class="bubble">◐</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="signature-box">
+        <div class="signature-header">প্রাপ্ত<br>নম্বর</div>
+        <div class="signature-space"></div>
+      </div>
+
+      <div class="signature-box">
+        <div class="signature-header">পরীক্ষকের<br>স্বাক্ষর</div>
+        <div class="signature-space"></div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Right Timing Track -->
+  <div class="timing-track">
+    <div class="timing-block-large"></div>
+    <div class="timing-marks">
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div>
+    </div>
+    <div class="timing-block-large"></div>
+  </div>
+
+</div>
+  <div class="cut-line"></div>
+  <div class="sheet-container">
+  
+  <!-- Left Timing Track -->
+  <div class="timing-track">
+    <div class="timing-block-large"></div>
+    <div class="timing-marks">
+      <!-- 34 Timing dashes -->
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div>
+    </div>
+    <div class="timing-block-large"></div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    
+    <!-- Helper Script for Bengali Numbers -->
+    <script>
+      window.toBengaliNumber = num => String(num).replace(/[0-9]/g, d => '০১২৩৪৫৬৭৮৯'[d]);
+      window.bengaliDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+    </script>
+
+    <!-- School Header -->
+    <div class="header">
+      <h1>আলহেরা এডুকেয়ার হোম হাই স্কুল</h1>
+      <p>জলঢাকা, নীলফামারী</p>
+    </div>
+
+    <!-- Container enclosing 'উত্তরপত্র' and MCQ options -->
+    <div class="mcq-boxed-container">
+      <div class="mcq-header-bar">উত্তরপত্র</div>
+      <div class="mcq-section">
+        
+        <!-- Col 1: Q1 - Q10 -->
+        <div class="mcq-col">
+          <div class="mcq-col-header">এমসিকিউ উত্তর এখানে পূরণ করুন</div>
+          <table class="mcq-table">
+            <script>
+              for(let i=1; i<=10; i++) {
+                document.write(`
+                  <tr>
+                    <td class="q-num">${toBengaliNumber(i)}</td>
+                    <td class="mcq-row-bg">
+                      <div class="bubble-container">
+                        <span class="bubble">ক</span>
+                        <span class="bubble">খ</span>
+                        <span class="bubble">গ</span>
+                        <span class="bubble">ঘ</span>
+                      </div>
+                    </td>
+                  </tr>
+                `);
+              }
+            </script>
+          </table>
+        </div>
+
+        <!-- Col 2: Q11 - Q20 -->
+        <div class="mcq-col">
+          <div class="mcq-col-header">এমসিকিউ উত্তর এখানে পূরণ করুন</div>
+          <table class="mcq-table">
+            <script>
+              for(let i=11; i<=20; i++) {
+                document.write(`
+                  <tr>
+                    <td class="q-num">${toBengaliNumber(i)}</td>
+                    <td class="mcq-row-bg">
+                      <div class="bubble-container">
+                        <span class="bubble">ক</span>
+                        <span class="bubble">খ</span>
+                        <span class="bubble">গ</span>
+                        <span class="bubble">ঘ</span>
+                      </div>
+                    </td>
+                  </tr>
+                `);
+              }
+            </script>
+          </table>
+        </div>
+
+        <!-- Col 3: Q21 - Q30 -->
+        <div class="mcq-col">
+          <div class="mcq-col-header">এমসিকিউ উত্তর এখানে পূরণ করুন</div>
+          <table class="mcq-table">
+            <script>
+              for(let i=21; i<=30; i++) {
+                document.write(`
+                  <tr>
+                    <td class="q-num">${toBengaliNumber(i)}</td>
+                    <td class="mcq-row-bg">
+                      <div class="bubble-container">
+                        <span class="bubble">ক</span>
+                        <span class="bubble">খ</span>
+                        <span class="bubble">গ</span>
+                        <span class="bubble">ঘ</span>
+                      </div>
+                    </td>
+                  </tr>
+                `);
+              }
+            </script>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Exam Info Fields -->
+    <div class="info-fields">
+      <div class="info-row">
+        <span class="label">পরীক্ষার নাম:</span>
+        <div class="underline-input" style="flex: 2;"></div>
+        <span class="label">তারিখ:</span>
+        <div class="underline-input" style="flex: 0.5;"></div> / 
+        <div class="underline-input" style="flex: 0.5;"></div> / 
+        <div class="underline-input" style="flex: 0.8;"></div>
+      </div>
+      <div class="info-row">
+        <span class="label label-black">বিষয়:</span>
+        <div class="underline-input-black" style="flex: 2;"></div>
+        <span class="label">পরীক্ষা নং:</span>
+        <div class="underline-input" style="flex: 1;"></div>
+      </div>
+    </div>
+
+    <div class="student-name-box">
+      শিক্ষার্থীর নাম:
+    </div>
+
+    <!-- Grid Columns: Student ID, Roll, Class, Section/Set, CQ Marks -->
+    <div class="grids-section">
+      
+      <!-- Student ID No (7 digits) -->
+      <div class="grid-box">
+        <div class="grid-header">শিক্ষার্থী আইডি নং</div>
+        <div class="grid-body">
+          <script>
+            for(let c=0; c<7; c++) {
+              let bubbles = '';
+              for(let d=0; d<=9; d++) {
+                bubbles += `<span class="bubble">${bengaliDigits[d]}</span>`;
+              }
+              document.write(`<div class="digit-col"><div class="box-input"></div>${bubbles}</div>`);
+            }
+          </script>
+        </div>
+      </div>
+
+      <!-- Roll No (3 digits) -->
+      <div class="grid-box">
+        <div class="grid-header">রোল নং</div>
+        <div class="grid-body">
+          <script>
+            for(let c=0; c<3; c++) {
+              let bubbles = '';
+              for(let d=0; d<=9; d++) {
+                bubbles += `<span class="bubble">${bengaliDigits[d]}</span>`;
+              }
+              document.write(`<div class="digit-col"><div class="box-input"></div>${bubbles}</div>`);
+            }
+          </script>
+        </div>
+      </div>
+
+      <!-- Class (2 digits) -->
+      <div class="grid-box">
+        <div class="grid-header">শ্রেণি</div>
+        <div class="grid-body">
+          <script>
+            for(let c=0; c<2; c++) {
+              let bubbles = '';
+              for(let d=0; d<=9; d++) {
+                bubbles += `<span class="bubble">${bengaliDigits[d]}</span>`;
+              }
+              document.write(`<div class="digit-col"><div class="box-input"></div>${bubbles}</div>`);
+            }
+          </script>
+        </div>
+      </div>
+
+      <!-- Section & Set No -->
+      <div class="grid-box section-set-box">
+        <div class="grid-header">শাখা</div>
+        <div style="padding: 3px 4px;">
+          <div class="white-rect-box"></div>
+          <div class="choice-row">ক <span class="bubble"></span></div>
+          <div class="choice-row">খ <span class="bubble"></span></div>
+          <div class="choice-row">গ <span class="bubble"></span></div>
+          <div class="choice-row">ঘ <span class="bubble"></span></div>
+        </div>
+        <div class="grid-header" style="border-top: 1.5px solid var(--omr-pink);">সেট নং</div>
+        <div style="padding: 3px 4px;">
+          <div class="choice-row">ক <span class="bubble"></span></div>
+          <div class="choice-row">খ <span class="bubble"></span></div>
+          <div class="choice-row">গ <span class="bubble"></span></div>
+        </div>
+      </div>
+
+      <!-- Teacher CQ Mark -->
+      <div class="teacher-wrapper">
+        <div class="vertical-label">শুধু শিক্ষকের জন্য</div>
+        <div class="grid-box" style="border: none;">
+          <div class="grid-header">সৃজনশীল নম্বর</div>
+          <div class="grid-body">
+            <script>
+              for(let c=0; c<2; c++) {
+                let bubbles = '';
+                for(let d=0; d<=9; d++) {
+                  bubbles += `<span class="bubble">${bengaliDigits[d]}</span>`;
+                }
+                document.write(`<div class="digit-col"><div class="box-input"></div>${bubbles}</div>`);
+              }
+            </script>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Instructions & Signatures -->
+    <div class="bottom-section">
+      
+      <div class="instruction-box">
+        <div class="instruction-title">ওএমআর পূরণের নির্দেশনাবলী</div>
+        <div class="sample-row">
+          <span>সঠিক পদ্ধতি</span>
+          <div class="sample-bubbles">
+            <span class="bubble"></span>
+            <span class="bubble"></span>
+            <span class="bubble bubble-filled"></span>
+            <span class="bubble"></span>
+          </div>
+        </div>
+        <div class="sample-row">
+          <span>ভুল পদ্ধতি</span>
+          <div class="sample-bubbles" style="font-size: 12px; color: var(--omr-pink);">
+            <span class="bubble">✕</span>
+            <span class="bubble"></span>
+            <span class="bubble">✓</span>
+            <span class="bubble">◐</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="signature-box">
+        <div class="signature-header">প্রাপ্ত<br>নম্বর</div>
+        <div class="signature-space"></div>
+      </div>
+
+      <div class="signature-box">
+        <div class="signature-header">পরীক্ষকের<br>স্বাক্ষর</div>
+        <div class="signature-space"></div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Right Timing Track -->
+  <div class="timing-track">
+    <div class="timing-block-large"></div>
+    <div class="timing-marks">
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div><div class="timing-bar"></div><div class="timing-bar"></div>
+      <div class="timing-bar"></div>
+    </div>
+    <div class="timing-block-large"></div>
+  </div>
+
+</div>
+</div>
+
+</body>
+</html>
