@@ -1917,18 +1917,32 @@
           previewInfo.fileName = file.name;
           previewInfo.imagePreviewUrl = URL.createObjectURL(file);
           
-          // Simulate OMR extraction from image
-          const simSets = ['ক', 'খ', 'গ'];
-          simSets.forEach(s => {
-            const extracted = [];
-            for (let q = 0; q < 30; q++) {
-              extracted.push(optionsBengali[Math.floor(Math.random() * optionsBengali.length)]);
-            }
-            state.answerKeys[s] = extracted;
-            loadedSetNames.add(s);
-          });
+          textAnswerKeyStatus.innerHTML = '<span style="color: var(--warning);"><i class="fa-solid fa-spinner fa-spin"></i> OMR প্রসেস করা হচ্ছে...</span>';
           
-          parsedCount++;
+          try {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const response = await fetch('/api/scan_omr', {
+              method: 'POST',
+              body: formData
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              if (data.status === 'success' && data.sets) {
+                Object.keys(data.sets).forEach(s => {
+                  state.answerKeys[s] = data.sets[s];
+                  loadedSetNames.add(s);
+                });
+                parsedCount++;
+              }
+            } else {
+              console.error('API Error:', await response.text());
+            }
+          } catch (error) {
+            console.error('Network Error:', error);
+          }
         }
       }
 
