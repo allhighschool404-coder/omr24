@@ -1011,8 +1011,8 @@
     }
 
     .interactive-bubble.selected-user {
-      background: #1e293b;
-      border-color: #1e293b;
+      background: #000000;
+      border-color: #000000;
       color: white;
     }
 
@@ -1619,9 +1619,6 @@
       
       <div class="modal-footer">
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button type="button" class="btn btn-outline btn-sm" onclick="randomizeAnswerKeys()" title="পরীক্ষার জন্য র‍্যান্ডম কি জেনারেট করুন">
-            <i class="fa-solid fa-shuffle"></i> র‍্যান্ডম কি
-          </button>
           <button type="button" class="btn btn-outline btn-sm" onclick="clearAnswerKeys()" title="বর্তমান উত্তরপত্র মুছে ফেলুন">
             <i class="fa-solid fa-trash-can"></i> উত্তরপত্র মুছুন
           </button>
@@ -1820,9 +1817,11 @@
                   for (let r = 1; r < rows.length && newKeys.length < 30; r++) {
                     const cellVal = rows[r][colIdx];
                     const opt = normalizeOption(cellVal);
-                    if (opt) newKeys.push(opt);
+                    newKeys.push(opt || null);
                   }
+                  // Remove trailing nulls if any (optional, but keep it simple)
                   if (newKeys.length > 0) {
+                    // Fill remaining with 'ক' (or null, keeping it to 'ক' as originally)
                     while (newKeys.length < 30) newKeys.push('ক');
                     state.answerKeys[setName] = newKeys;
                     loadedSetNames.add(setName);
@@ -1971,8 +1970,14 @@
     }
 
     // Attach listeners for both file and folder inputs
-    inputAnswerKeyFolder.addEventListener('change', (e) => handleAnswerKeyFiles(Array.from(e.target.files)));
-    inputAnswerKeyFile.addEventListener('change', (e) => handleAnswerKeyFiles(Array.from(e.target.files)));
+    inputAnswerKeyFolder.addEventListener('change', (e) => {
+      handleAnswerKeyFiles(Array.from(e.target.files));
+      e.target.value = '';
+    });
+    inputAnswerKeyFile.addEventListener('change', (e) => {
+      handleAnswerKeyFiles(Array.from(e.target.files));
+      e.target.value = '';
+    });
 
     // Quick Preview buttons
     [btnPreviewAnswerKeyCard, btnQuickKeyPreview].forEach(btn => {
@@ -1997,6 +2002,7 @@
       } else {
         textStudentOMRStatus.innerHTML = `<span style="color: var(--danger);">কোনো বৈধ ইমেজ ফাইল পাওয়া যায়নি</span>`;
       }
+      e.target.value = '';
     });
 
     // Drag and drop visual cues & drop handling
