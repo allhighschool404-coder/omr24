@@ -1175,16 +1175,24 @@
     <!-- Hero Banner with Quick Instruction & Direct Action -->
     <section class="hero-banner">
       <div class="banner-info">
-        <h2><i class="fa-solid fa-bolt" style="color: #f59e0b;"></i> ওএমআর শিট মূল্যায়ন ড্যাশবোর্ড</h2>
-        <p>শিক্ষার্থীদের পূরণকৃত OMR স্ক্যান করা ফোল্ডার এবং উত্তরপত্রের ফোল্ডার সিলেক্ট করে 'মূল্যায়ন শুরু করুন' বাটনে ক্লিক করুন। সিস্টেমটি স্বয়ংক্রিয়ভাবে আইডি, রোল ও উত্তরমালা স্ক্যান করে নির্ভুল গ্রেড শিট তৈরি করবে।</p>
+        <h2 id="heroDashboardTitle"><i class="fa-solid fa-bolt" style="color: #f59e0b;"></i> ওএমআর শিট মূল্যায়ন ড্যাশবোর্ড</h2>
+        <p>নতুন পরীক্ষা শুরু করতে "Create Exam" বাটনে ক্লিক করুন। এরপর ওএমআর শিট স্ক্যান করে নির্ভুল গ্রেড শিট তৈরি করুন।</p>
       </div>
       <div class="banner-actions">
-        <!-- Instant Sample Data Generator for testing -->
-        <button id="btnLoadSampleData" class="btn btn-outline" style="border-style: dashed; border-color: var(--primary);">
+        <button id="btnEvaluatedExams" class="btn btn-outline" style="font-size: 1.05rem;">
+          <i class="fa-solid fa-list-check"></i> মূল্যায়নকৃত পরীক্ষা
+        </button>
+        <button id="btnCreateExam" class="btn btn-primary" style="font-size: 1.05rem;">
+          <i class="fa-solid fa-folder-plus"></i> Create Exam
+        </button>
+        <button id="btnLoadSampleData" class="btn btn-outline" style="display: none; border-style: dashed; border-color: var(--primary);">
           <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--primary);"></i> নমুনা ডেটা লোড করুন (Demo)
         </button>
       </div>
     </section>
+
+    <!-- Workspace Container (Hidden initially) -->
+    <div id="examWorkspace" style="display: none;">
 
     <!-- Folder Inputs Section -->
     <section class="grid-upload-section">
@@ -1270,7 +1278,7 @@
         <button id="btnStartEvaluation" class="btn btn-primary" style="font-size: 1.05rem; padding: 0.65rem 1.5rem;">
           <i class="fa-solid fa-play"></i> OMR মূল্যায়ন শুরু করুন
         </button>
-        <button id="btnResetData" class="btn btn-outline btn-sm" title="বর্তমান তালিকা রিসেট করুন">
+        <button id="btnResetData" class="btn btn-outline btn-sm" style="display: none;" title="বর্তমান তালিকা রিসেট করুন">
           <i class="fa-solid fa-rotate-left"></i> রিসেট
         </button>
       </div>
@@ -1435,6 +1443,28 @@
       </div>
 
     </section>
+
+    </div> <!-- End examWorkspace -->
+
+    <!-- Evaluated Exams List Section -->
+    <div id="evaluatedExamsSection" style="display: none; padding: 2rem; background: var(--card-bg); border-radius: 12px; box-shadow: var(--shadow-md); margin-top: 1.5rem;">
+      <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px; color: var(--primary);">
+        <i class="fa-solid fa-list-check"></i> মূল্যায়নকৃত পরীক্ষার তালিকা
+      </h3>
+      <table class="table-result" style="width: 100%; text-align: left;">
+        <thead>
+          <tr style="background: var(--bg-color);">
+            <th style="padding: 10px;">পরীক্ষার নাম</th>
+            <th style="padding: 10px;">তারিখ</th>
+            <th style="padding: 10px;">পরীক্ষার্থী সংখ্যা</th>
+            <th style="padding: 10px;">অ্যাকশন</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyEvaluatedExams">
+          <!-- Rendered by JS -->
+        </tbody>
+      </table>
+    </div>
 
   </main>
 
@@ -1633,6 +1663,36 @@
   <!-- Hidden iframe for printing blank OMR -->
   <iframe id="printIframe" style="display: none;"></iframe>
 
+  <!-- Create Exam Modal -->
+  <div class="modal-overlay" id="modalCreateExam" style="display: none;">
+    <div class="modal-card" style="max-width: 500px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fa-solid fa-file-pen" style="color: var(--primary);"></i>
+          <span>Create Exam (নতুন পরীক্ষা তৈরি করুন)</span>
+        </div>
+        <button class="icon-btn" onclick="document.getElementById('modalCreateExam').style.display='none'" title="বন্ধ করুন">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="inputExamName">পরীক্ষার নাম (Exam Name) <span style="color:red;">*</span></label>
+          <input type="text" id="inputExamName" class="form-control" placeholder="যেমন: অর্ধবার্ষিক পরীক্ষা ২০২৬" required>
+        </div>
+        <div class="form-group" style="margin-top: 15px;">
+          <label for="inputExamQuestionCount">OMR এর যুক্ত থাকা প্রশ্ন সংখ্যা (Question Count)</label>
+          <input type="number" id="inputExamQuestionCount" class="form-control" value="30" min="1" max="100">
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+        <button class="btn btn-outline" onclick="document.getElementById('modalCreateExam').style.display='none'">বাতিল</button>
+        <button class="btn btn-primary" id="btnNextCreateExam">Next <i class="fa-solid fa-arrow-right"></i></button>
+      </div>
+    </div>
+  </div>
+
+
   <!-- Toast Notification Container -->
   <div class="toast-container" id="toastContainer"></div>
 
@@ -1652,6 +1712,10 @@
 
     // Application Global State
     const state = {
+      examName: '',
+      examQuestionCount: 30,
+      currentExamId: null,
+      evaluatedExams: JSON.parse(localStorage.getItem('evaluatedExams')) || [],
       answerKeys: JSON.parse(JSON.stringify(defaultAnswerKeys)),
       currentEditingKeySet: 'ক',
       studentFiles: [],
@@ -2063,109 +2127,142 @@
       runEvaluationProcess(fileCount > 0 ? fileCount : state.students.length);
     });
 
-    function runEvaluationProcess(totalItems) {
+    async function runEvaluationProcess(totalItems) {
       progressWrapper.style.display = 'block';
       progressBarInner.style.width = '0%';
       btnStartEvaluation.disabled = true;
 
-      let currentStep = 0;
       const targetCount = totalItems || 25;
       
-      const interval = setInterval(() => {
-        currentStep++;
-        const percent = Math.min(100, Math.round((currentStep / targetCount) * 100));
-        progressBarInner.style.width = `${percent}%`;
-        progressPercentText.textContent = `${toBengaliNumber(percent)}%`;
-        progressStatusText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ওএমআর শিট ${toBengaliNumber(currentStep)} / ${toBengaliNumber(targetCount)} স্ক্যান করা হচ্ছে...`;
-
-        if (currentStep >= targetCount) {
-          clearInterval(interval);
-          setTimeout(() => {
-            progressWrapper.style.display = 'none';
-            btnStartEvaluation.disabled = false;
+      // If we have actual student files, process them via backend
+      if (state.studentFiles && state.studentFiles.length > 0) {
+        const generated = [];
+        const files = state.studentFiles;
+        
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          progressStatusText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${file.name} স্ক্যান করা হচ্ছে... (${toBengaliNumber(i+1)}/${toBengaliNumber(files.length)})`;
+          
+          try {
+            const formData = new FormData();
+            formData.append('file', file);
             
-            // If evaluating freshly selected files
-            if (state.studentFiles.length > 0) {
-              generateDataFromFiles(state.studentFiles);
-            } else if (state.students.length === 0) {
-              generateSampleStudents(25);
-            } else {
-              // Re-evaluate current students against updated answer keys
-              reEvaluateAllStudents();
+            const response = await fetch('/api/scan_omr', {
+              method: 'POST',
+              body: formData
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              if (data.status === 'success' && data.sets) {
+                // Determine which set was detected
+                const detectedSet = Object.keys(data.sets)[0] || 'ক';
+                const parsedAnswersArray = data.sets[detectedSet];
+                
+                // Convert array to object mapping (1-30)
+                const answers = {};
+                for (let q = 1; q <= 30; q++) {
+                  answers[q] = parsedAnswersArray[q - 1];
+                }
+                
+                // Mock ID/Roll since the python script doesn't extract them yet
+                const studentId = String(1024500 + i + 1);
+                const roll = String(i + 1).padStart(3, '0');
+                const section = ['ক', 'খ', 'গ', 'ঘ'][i % 4];
+                
+                const scoreInfo = calculateStudentScore(answers, detectedSet);
+                const percentage = ((scoreInfo.correct / 30) * 100).toFixed(1);
+                const isPassed = scoreInfo.correct >= 10;
+                
+                generated.push({
+                  id: studentId,
+                  roll: roll,
+                  class: '10',
+                  section: section,
+                  set: detectedSet,
+                  answers: answers,
+                  correct: scoreInfo.correct,
+                  wrong: scoreInfo.wrong,
+                  blank: scoreInfo.blank,
+                  total: 30,
+                  percentage: percentage,
+                  status: isPassed ? 'উত্তীর্ণ' : 'অনুত্তীর্ণ',
+                  fileName: file.name
+                });
+              }
             }
-
-            renderResultsTable();
-            updateStatistics();
-            btnExportExcel.disabled = false;
-            btnPrintTable.disabled = false;
-            
-            showToast('সকল ওএমআর শিট সফলভাবে মূল্যায়ন সম্পন্ন হয়েছে!', 'success', 'fa-circle-check');
-            
-            // Confetti celebration
-            try {
-              confetti({
-                particleCount: 80,
-                spread: 70,
-                origin: { y: 0.6 }
-              });
-            } catch(e){}
-          }, 400);
-        }
-      }, 50);
-    }
-
-    // Generate Student Data from Loaded Files
-    function generateDataFromFiles(files) {
-      const generated = [];
-      const sets = ['ক', 'খ', 'গ'];
-      const sections = ['ক', 'খ', 'গ', 'ঘ'];
-
-      files.forEach((file, index) => {
-        const studentId = String(1024500 + index + 1);
-        const roll = String(index + 1).padStart(3, '0');
-        const set = sets[index % sets.length];
-        const section = sections[index % sections.length];
-        const studentClass = "10";
-
-        // Generate student answers with high realistic accuracy (20 to 29 correct answers)
-        const targetKey = state.answerKeys[set] || defaultAnswerKeys['ক'];
-        const answers = {};
-        for (let q = 1; q <= 30; q++) {
-          const rand = Math.random();
-          if (rand > 0.15) {
-            answers[q] = targetKey[q - 1]; // 85% correct match
-          } else if (rand > 0.05) {
-            // wrong answer
-            const wrongOptions = optionsBengali.filter(o => o !== targetKey[q - 1]);
-            answers[q] = wrongOptions[Math.floor(Math.random() * wrongOptions.length)];
-          } else {
-            // omitted/blank
-            answers[q] = null;
+          } catch (err) {
+            console.error("Error processing file:", file.name, err);
           }
+          
+          const percent = Math.round(((i + 1) / files.length) * 100);
+          progressBarInner.style.width = `${percent}%`;
+          progressPercentText.textContent = `${toBengaliNumber(percent)}%`;
         }
+        
+        state.students = generated;
+        finishEvaluation();
+        
+      } else if (state.students.length === 0) {
+        // Fallback to sample data simulation
+        let currentStep = 0;
+        const interval = setInterval(() => {
+          currentStep++;
+          const percent = Math.min(100, Math.round((currentStep / targetCount) * 100));
+          progressBarInner.style.width = `${percent}%`;
+          progressPercentText.textContent = `${toBengaliNumber(percent)}%`;
+          progressStatusText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ওএমআর শিট ${toBengaliNumber(currentStep)} / ${toBengaliNumber(targetCount)} স্ক্যান করা হচ্ছে...`;
 
-        const scoreInfo = calculateStudentScore(answers, set);
-        const percentage = ((scoreInfo.correct / 30) * 100).toFixed(1);
-        const isPassed = scoreInfo.correct >= 10; // 33% pass mark
-
-        generated.push({
-          id: studentId,
-          roll: roll,
-          class: studentClass,
-          section: section,
-          set: set,
-          answers: answers,
-          correct: scoreInfo.correct,
-          wrong: scoreInfo.wrong,
-          blank: scoreInfo.blank,
-          total: 30,
-          percentage: percentage,
-          status: isPassed ? 'উত্তীর্ণ' : 'অনুত্তীর্ণ',
-          fileName: file.name
+          if (currentStep >= targetCount) {
+            clearInterval(interval);
+            generateSampleStudents(targetCount);
+            finishEvaluation();
+          }
+        }, 50);
+      } else {
+        // Re-evaluate existing students against updated answer keys
+        reEvaluateAllStudents();
+        finishEvaluation();
+      }
+    }
+    
+    function finishEvaluation() {
+      progressWrapper.style.display = 'none';
+      btnStartEvaluation.disabled = false;
+      renderResultsTable();
+      updateStatistics();
+      btnExportExcel.disabled = false;
+      btnPrintTable.disabled = false;
+      
+      // Save to evaluatedExams
+      if (state.students.length > 0 && state.examName) {
+        if (!state.currentExamId) state.currentExamId = Date.now().toString();
+        const currentExamResult = {
+          id: state.currentExamId,
+          examName: state.examName,
+          date: new Date().toLocaleDateString('bn-BD'),
+          totalStudents: state.students.length,
+          students: JSON.parse(JSON.stringify(state.students)),
+          answerKeys: JSON.parse(JSON.stringify(state.answerKeys))
+        };
+        const existingIndex = state.evaluatedExams.findIndex(e => e.id === state.currentExamId);
+        if (existingIndex !== -1) {
+          state.evaluatedExams[existingIndex] = currentExamResult;
+        } else {
+          state.evaluatedExams.push(currentExamResult);
+        }
+        localStorage.setItem('evaluatedExams', JSON.stringify(state.evaluatedExams));
+      }
+      
+      showToast('সকল ওএমআর শিট সফলভাবে মূল্যায়ন সম্পন্ন হয়েছে!', 'success', 'fa-circle-check');
+      
+      try {
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.6 }
         });
-      });
-
-      state.students = generated;
+      } catch(e){}
     }
 
     // Load Sample Students Demo Generator
@@ -2762,7 +2859,8 @@
         XLSX.utils.book_append_sheet(workbook, worksheet, 'OMR_Evaluation_Result');
 
         const dateStr = new Date().toISOString().slice(0, 10);
-        XLSX.writeFile(workbook, `OMR_Evaluation_Report_${dateStr}.xlsx`);
+        const fileName = state.examName ? `${state.examName}_OMR_Result_${dateStr}.xlsx` : `OMR_Evaluation_Report_${dateStr}.xlsx`;
+        XLSX.writeFile(workbook, fileName);
         showToast('এক্সেল (.xlsx) ফাইল সফলভাবে ডাউনলোড হয়েছে!', 'success', 'fa-file-excel');
       } catch (err) {
         console.error(err);
@@ -2817,6 +2915,124 @@
         showToast('ডেটা সফলভাবে রিসেট করা হয়েছে', 'info');
       }
     });
+
+    // Create Exam Logic
+    const btnCreateExam = document.getElementById('btnCreateExam');
+    const modalCreateExam = document.getElementById('modalCreateExam');
+    const btnNextCreateExam = document.getElementById('btnNextCreateExam');
+    const examWorkspace = document.getElementById('examWorkspace');
+    const inputExamName = document.getElementById('inputExamName');
+    const inputExamQuestionCount = document.getElementById('inputExamQuestionCount');
+    const heroDashboardTitle = document.getElementById('heroDashboardTitle');
+
+    if (btnCreateExam) {
+      btnCreateExam.addEventListener('click', () => {
+        modalCreateExam.style.display = 'flex';
+      });
+    }
+
+    if (btnNextCreateExam) {
+      btnNextCreateExam.addEventListener('click', () => {
+        const examName = inputExamName.value.trim();
+        const qCount = parseInt(inputExamQuestionCount.value) || 30;
+        
+        if (!examName) {
+          showToast('দয়া করে পরীক্ষার নাম লিখুন', 'warning');
+          return;
+        }
+        
+        state.examName = examName;
+        state.examQuestionCount = qCount;
+        state.currentExamId = Date.now().toString();
+        
+        // Reset working state completely
+        state.students = [];
+        state.studentFiles = [];
+        state.answerKeyFiles = [];
+        state.answerKeys = JSON.parse(JSON.stringify(defaultAnswerKeys));
+        
+        // Reset UI Elements
+        dropzoneAnswerKey.classList.remove('filled');
+        dropzoneStudentOMR.classList.remove('filled');
+        textAnswerKeyStatus.innerHTML = 'কোনো উত্তরপত্র আপলোড করা হয়নি';
+        textStudentOMRStatus.innerHTML = '০ টি ফাইল নির্বাচিত';
+        
+        renderResultsTable();
+        updateStatistics();
+        btnExportExcel.disabled = true;
+        btnPrintTable.disabled = true;
+        
+        modalCreateExam.style.display = 'none';
+        evaluatedExamsSection.style.display = 'none';
+        examWorkspace.style.display = 'block';
+        heroDashboardTitle.innerHTML = `<i class="fa-solid fa-file-signature" style="color: var(--primary);"></i> পরীক্ষা: ${escapeHtml(examName)}`;
+        showToast('নতুন পরীক্ষা তৈরি হয়েছে। এবার উত্তরপত্র ও OMR আপলোড করুন।', 'success');
+      });
+    }
+
+    // Evaluated Exams Logic
+    const btnEvaluatedExams = document.getElementById('btnEvaluatedExams');
+    const evaluatedExamsSection = document.getElementById('evaluatedExamsSection');
+    const tbodyEvaluatedExams = document.getElementById('tbodyEvaluatedExams');
+
+    if (btnEvaluatedExams) {
+      btnEvaluatedExams.addEventListener('click', () => {
+        renderEvaluatedExams();
+        examWorkspace.style.display = 'none';
+        evaluatedExamsSection.style.display = 'block';
+      });
+    }
+
+    function renderEvaluatedExams() {
+      tbodyEvaluatedExams.innerHTML = '';
+      if (state.evaluatedExams.length === 0) {
+        tbodyEvaluatedExams.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">কোনো পরীক্ষা মূল্যায়ন করা হয়নি</td></tr>';
+        return;
+      }
+      
+      state.evaluatedExams.forEach((exam) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="padding: 10px; border-bottom: 1px solid var(--border-color);">${escapeHtml(exam.examName)}</td>
+          <td style="padding: 10px; border-bottom: 1px solid var(--border-color);">${escapeHtml(exam.date)}</td>
+          <td style="padding: 10px; border-bottom: 1px solid var(--border-color);">${toBengaliNumber(exam.totalStudents)} জন</td>
+          <td style="padding: 10px; border-bottom: 1px solid var(--border-color);">
+            <button class="btn btn-xs btn-primary" onclick="loadEvaluatedExam('${exam.id}')"><i class="fa-solid fa-eye"></i> দেখুন</button>
+            <button class="btn btn-xs btn-outline" style="color: red; border-color: red;" onclick="deleteEvaluatedExam('${exam.id}')"><i class="fa-solid fa-trash"></i> মুছুন</button>
+          </td>
+        `;
+        tbodyEvaluatedExams.appendChild(tr);
+      });
+    }
+
+    window.loadEvaluatedExam = function(id) {
+      const exam = state.evaluatedExams.find(e => e.id === id);
+      if (exam) {
+        state.currentExamId = exam.id;
+        state.examName = exam.examName;
+        state.students = JSON.parse(JSON.stringify(exam.students));
+        state.answerKeys = JSON.parse(JSON.stringify(exam.answerKeys));
+        
+        evaluatedExamsSection.style.display = 'none';
+        examWorkspace.style.display = 'block';
+        heroDashboardTitle.innerHTML = `<i class="fa-solid fa-file-signature" style="color: var(--primary);"></i> পরীক্ষা: ${escapeHtml(exam.examName)}`;
+        
+        renderResultsTable();
+        updateStatistics();
+        btnExportExcel.disabled = false;
+        btnPrintTable.disabled = false;
+        showToast('পরীক্ষার ফলাফল লোড করা হয়েছে', 'success');
+      }
+    };
+
+    window.deleteEvaluatedExam = function(id) {
+      if(confirm('আপনি কি নিশ্চিত যে এই পরীক্ষার ফলাফল মুছে ফেলতে চান?')) {
+        state.evaluatedExams = state.evaluatedExams.filter(e => e.id !== id);
+        localStorage.setItem('evaluatedExams', JSON.stringify(state.evaluatedExams));
+        renderEvaluatedExams();
+        showToast('পরীক্ষা মুছে ফেলা হয়েছে', 'info');
+      }
+    };
   </script>
 </body>
 </html>
