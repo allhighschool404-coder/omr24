@@ -80,8 +80,9 @@ def process_omr_image(image_path):
     # 1. Dynamically find the exact boundaries of the OMR page to ignore screenshot margins
     coords = cv2.findNonZero(thresh)
     if coords is not None:
-        x_coords = coords[:, 0, 0]
-        y_coords = coords[:, 0, 1]
+        coords = coords.reshape(-1, 2)
+        x_coords = coords[:, 0]
+        y_coords = coords[:, 1]
         page_left_x = int(np.min(x_coords))
         page_right_x = int(np.max(x_coords))
         page_top_y = int(np.min(y_coords))
@@ -142,27 +143,24 @@ def process_omr_image(image_path):
     total_answers = []
 
     # 4. Determine Answer for each Question
+    page_height = page_bottom_y - page_top_y
+    expected_row_0_y = page_top_y + page_height * 0.2025
+    row_spacing = page_height * 0.0307
+    
     for i, col in enumerate(cols):
         bubbles = col["bubbles"]
-        # Sort vertically to map them sequentially to Q1, Q2, Q3, etc.
-        bubbles = sorted(bubbles, key=lambda b: b["y"])
-        print(f"Column {i+1} mapped {len(bubbles)} bubbles.")
+        print(f"Column {i+1} found {len(bubbles)} bubbles.")
         
-        col_ans = []
-        for b in bubbles[:10]: # Max 10 per column
-            local_x = b["x"] - col["min_x"]
-            
-            # Options (ক, খ, গ, ঘ) sit in the right 75% of the column width
-            zone_start = 0.22 * col_width
-            zone_end = 0.95 * col_width
-            
-            slot = (local_x - zone_start) / ((zone_end - zone_start) / 4.0)
-            idx = int(max(0, min(3, slot)))
-            col_ans.append(bengali_options[idx])
-            
-        # Pad missing answers with None to ensure array stability
-        while len(col_ans) < 10:
-            col_ans.append(None)
+        col_ans = [None] * 10
+        expected_A_x = page_left_x + page_width * (0.142 + i * 0.293)
+        bubble_spacing = page_width * 0.0544
+        
+        for b in bubbles:
+            row_idx = int(round((b["y"] - expected_row_0_y) / row_spacing))
+            if 0 <= row_idx < 10:
+                slot = int(round((b["x"] - expected_A_x) / bubble_spacing))
+                idx = max(0, min(3, slot))
+                col_ans[row_idx] = bengali_options[idx]
             
         total_answers.extend(col_ans)
 
