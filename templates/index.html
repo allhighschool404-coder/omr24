@@ -2183,10 +2183,11 @@
                   answers[q] = parsedAnswersArray[q - 1];
                 }
                 
-                // Mock ID/Roll since the python script doesn't extract them yet
-                const studentId = String(1024500 + i + 1);
-                const roll = String(i + 1).padStart(3, '0');
-                const section = ['ক', 'খ', 'গ', 'ঘ'][i % 4];
+                // Use extracted ID/Roll/Class/Section from backend
+                const studentId = data.student_id || String(1024500 + i + 1);
+                const roll = data.roll_no || String(i + 1).padStart(3, '0');
+                const studentClass = data.class_name || '10';
+                const section = data.section || ['ক', 'খ', 'গ', 'ঘ'][i % 4];
                 
                 const scoreInfo = calculateStudentScore(answers, detectedSet);
                 const percentage = ((scoreInfo.correct / 30) * 100).toFixed(1);
@@ -2195,7 +2196,7 @@
                 generated.push({
                   id: studentId,
                   roll: roll,
-                  class: '10',
+                  class: studentClass,
                   section: section,
                   set: detectedSet,
                   answers: answers,

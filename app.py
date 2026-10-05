@@ -145,7 +145,7 @@ def process_omr_image(image_data, filename="Memory Stream"):
         {"min_x": page_left_x + col_width * 2, "max_x": page_right_x, "bubbles": []}
     ]
     
-    set_bubbles = []
+    bottom_bubbles = []
     
     for b in filled_bubbles:
         # Group bubbles based on their Y position relative to the page content
@@ -158,10 +158,8 @@ def process_omr_image(image_data, filename="Memory Stream"):
             else:
                 cols[2]["bubbles"].append(b)
         else:
-            # It's a bottom-grid bubble (e.g. Set No)
-            # The Set Number grid is roughly at 60%-80% horizontally
-            if page_left_x + 0.6 * page_width < b["x"] < page_left_x + 0.8 * page_width:
-                set_bubbles.append(b)
+            # It's a bottom-grid bubble (e.g. ID, Roll, Class, Section, Set)
+            bottom_bubbles.append(b)
 
     bengali_options = ['ক', 'খ', 'গ', 'ঘ']
     total_answers = []
@@ -173,7 +171,6 @@ def process_omr_image(image_data, filename="Memory Stream"):
     
     for i, col in enumerate(cols):
         bubbles = col["bubbles"]
-        print(f"Column {i+1} found {len(bubbles)} bubbles.")
         
         col_ans = [None] * 10
         expected_A_x = page_left_x + page_width * (0.142 + i * 0.293)
@@ -188,16 +185,63 @@ def process_omr_image(image_data, filename="Memory Stream"):
             
         total_answers.extend(col_ans)
 
-    # 5. Determine the Set Number
-    detected_set = 'ক' # Default
-    if set_bubbles:
-        set_bubbles = sorted(set_bubbles, key=lambda b: b["y"])
-        # For simplicity, if they marked at least one bubble in the Set box,
-        # we default it to 'ক'. A more advanced check could read relative Y position.
-        detected_set = 'ক'
-        print("Detected Set Bubble.")
-
-    print(f"Extracted Answers for Set {detected_set}: {total_answers}")
+    # 5. Extract ID, Roll, Class, Section, Set
+    student_id = "0000000"
+    roll_no = "000"
+    class_name = "10"
+    detected_set = 'ক'
+    detected_section = 'ক'
+    
+    if bottom_bubbles:
+        # User confirmed: Row 1 = 0, Row 2 = 1, ..., Row 10 = 9.
+        # Use the exact MCQ row_spacing for y_step since bubble sizes are identical
+        y_step = row_spacing
+        
+        # Estimate digit_0_y based on MCQ layout (MCQ ends at row 9, gap is roughly 8 rows)
+        # 0.2025 + 17 * 0.0307 = 0.7244
+        initial_digit_0_y = page_top_y + page_height * 0.7244
+        
+        # Refine digit_0_y using the median of implied digit_0_y from all bottom bubbles
+        implied_y0s = []
+        for b in bottom_bubbles:
+            d = round((b["y"] - initial_digit_0_y) / y_step)
+            implied_y0s.append(b["y"] - d * y_step)
+            
+        implied_y0s.sort()
+        digit_0_y = implied_y0s[len(implied_y0s) // 2] if implied_y0s else initial_digit_0_y
+        
+        id_cols, roll_cols, class_cols = ["" for _ in range(7)], ["" for _ in range(3)], ["" for _ in range(2)]
+        
+        for b in bottom_bubbles:
+            rel_x = (b["x"] - page_left_x) / float(page_width)
+            if 0.05 <= rel_x < 0.35: # ID
+                col = int((rel_x - 0.05) / ((0.35 - 0.05) / 7.0))
+                if 0 <= col < 7:
+                    digit = int(round((b["y"] - digit_0_y) / y_step))
+                    id_cols[col] = str(max(0, min(9, digit)))
+            elif 0.37 <= rel_x < 0.52: # Roll
+                col = int((rel_x - 0.37) / ((0.52 - 0.37) / 3.0))
+                if 0 <= col < 3:
+                    digit = int(round((b["y"] - digit_0_y) / y_step))
+                    roll_cols[col] = str(max(0, min(9, digit)))
+            elif 0.54 <= rel_x < 0.65: # Class
+                col = int((rel_x - 0.54) / ((0.65 - 0.54) / 2.0))
+                if 0 <= col < 2:
+                    digit = int(round((b["y"] - digit_0_y) / y_step))
+                    class_cols[col] = str(max(0, min(9, digit)))
+            elif 0.67 <= rel_x < 0.82: # Section & Set
+                digit_approx = (b["y"] - digit_0_y) / y_step
+                if 0 <= digit_approx <= 3.5:
+                    idx = int(round(digit_approx))
+                    detected_section = bengali_options[max(0, min(3, idx))]
+                elif 5.5 <= digit_approx <= 9:
+                    idx = int(round(digit_approx - 6.0))
+                    detected_set = bengali_options[max(0, min(2, idx))]
+                    
+        # Replace empty with "0" for missing bubbles
+        student_id = "".join(d if d else "0" for d in id_cols)
+        roll_no = "".join(d if d else "0" for d in roll_cols)
+        class_name = "".join(d if d else "0" for d in class_cols)
 
     # Fallback to prevent crash if completely empty
     if len(total_answers) == 0:
@@ -207,7 +251,11 @@ def process_omr_image(image_data, filename="Memory Stream"):
         "status": "success",
         "sets": {
             detected_set: total_answers
-        }
+        },
+        "student_id": student_id,
+        "roll_no": roll_no,
+        "class_name": class_name,
+        "section": detected_section
     }
     
     return result
