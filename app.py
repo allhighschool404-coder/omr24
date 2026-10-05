@@ -4,7 +4,26 @@ import numpy as np
 import os
 import uuid
 
+import sqlite3
+
 app = Flask(__name__)
+
+def init_db():
+    conn = sqlite3.connect('omr_results.db')
+    c = conn.cursor()
+    columns = ", ".join([f"Q{i+1} TEXT" for i in range(30)])
+    c.execute(f'''
+        CREATE TABLE IF NOT EXISTS results (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT,
+            set_name TEXT,
+            {columns}
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+init_db()
 
 # Configure upload folder
 UPLOAD_FOLDER = 'uploads'
@@ -51,7 +70,7 @@ def four_point_transform(image, pts):
     warped = cv2.warpPerspective(image, M, (maxWidth, maxHeight))
     return warped
 
-def process_omr_image(image_path):
+def process_omr_image(image_data, filename="Memory Stream"):
     """
     Ultra-Robust OpenCV OMR Processing Logic.
     This version dynamically detects the page boundaries to ignore any screenshot margins,
@@ -60,9 +79,14 @@ def process_omr_image(image_path):
     import cv2
     import numpy as np
     
-    print(f"--- Processing OMR Image: {image_path} ---")
+    print(f"--- Processing OMR Image: {filename} ---")
 
-    image = cv2.imread(image_path)
+    if isinstance(image_data, str):
+        image = cv2.imread(image_data)
+    else:
+        nparr = np.frombuffer(image_data, np.uint8)
+        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
     if image is None:
         print("Error: Invalid image")
         return {"error": "Invalid image"}
@@ -198,18 +222,64 @@ def scan_omr():
         return jsonify({"error": "No selected file"}), 400
         
     if file:
-        filename = str(uuid.uuid4()) + ".jpg"
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
+        # Process the image directly from memory without saving to website's folder
+        image_bytes = file.read()
+        result = process_omr_image(image_bytes, file.filename)
         
-        # Process the image
-        result = process_omr_image(filepath)
-        
-        # Clean up
-        if os.path.exists(filepath):
-            os.remove(filepath)
+        # Save results permanently to a CSV file and SQLite DB
+        if result.get("status") == "success":
+            import csv
+            from datetime import datetime
             
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            csv_filename = 'omr_results.csv'
+            file_exists = os.path.isfile(csv_filename)
+            
+            with open(csv_filename, mode='a', newline='', encoding='utf-8-sig') as f:
+                writer = csv.writer(f)
+                if not file_exists:
+                    # Write header (Timestamp, Set, Q1, Q2, ..., Q30)
+                    header = ['Timestamp', 'Set'] + [f'Q{i+1}' for i in range(30)]
+                    writer.writerow(header)
+                
+                # Write data to CSV and SQLite
+                for set_name, answers in result.get('sets', {}).items():
+                    row = [timestamp, set_name] + answers
+                    writer.writerow(row)  # Save to CSV
+                    
+                    # Save to SQLite Database
+                    try:
+                        conn = sqlite3.connect('omr_results.db')
+                        c = conn.cursor()
+                        placeholders = ", ".join(["?"] * 32)
+                        columns = ", ".join([f"Q{i+1}" for i in range(30)])
+                        c.execute(f"INSERT INTO results (timestamp, set_name, {columns}) VALUES ({placeholders})", row)
+                        conn.commit()
+                        conn.close()
+                    except Exception as e:
+                        print(f"Database error: {e}")
+        
         return jsonify(result)
+
+@app.route('/api/exams', methods=['GET', 'POST'])
+def handle_exams():
+    import json
+    filename = 'exams_data.json'
+    if request.method == 'GET':
+        try:
+            with open(filename, 'r', encoding='utf-8') as f:
+                return jsonify(json.load(f))
+        except (FileNotFoundError, json.JSONDecodeError):
+            return jsonify([])
+            
+    if request.method == 'POST':
+        data = request.json
+        try:
+            with open(filename, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=4)
+            return jsonify({"status": "success"})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
